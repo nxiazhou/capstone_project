@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 npm install
 
 npm start
