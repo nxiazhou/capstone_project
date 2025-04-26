@@ -37,7 +37,7 @@ export default function Login() {
           onClick={handleLogin}
           className="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700"
         >
-          Login
+          Login Page
         </button>
       </div>
     </div>
