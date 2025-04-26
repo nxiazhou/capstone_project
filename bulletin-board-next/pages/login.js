@@ -33,11 +33,12 @@ export default function Login() {
           onChange={(e) => setPassword(e.target.value)}
           className="w-full mb-6 p-2 border rounded"
         />
+        <h1>ttt</h1>
         <button
           onClick={handleLogin}
           className="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700"
         >
-          Login Page
+          Login
         </button>
       </div>
     </div>
