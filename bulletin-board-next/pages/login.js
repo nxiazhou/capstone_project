@@ -8,14 +8,22 @@ const Login = () => {
 
   const [showSignup, setShowSignup] = useState(false);
   const [showForgot, setShowForgot] = useState(false);
+  const [showPay, setShowPay] = useState(false);
 
   const handleLogin = (e) => {
     e.preventDefault();
+    // 模拟登录逻辑
     if (username === "admin" && password === "1234") {
       router.push("/dashboard");
     } else {
       alert("Incorrect username or password.");
     }
+  };
+
+  const handleRegister = (e) => {
+    e.preventDefault();
+    alert("Register success (mock)");
+    setShowSignup(false);
   };
 
   return (
@@ -60,32 +68,52 @@ const Login = () => {
           </div>
         </form>
 
-      {/* Sign Up Modal */}
-      {showSignup && (
-        <Modal title="Sign Up" onClose={() => setShowSignup(false)}>
-          <form className="space-y-4">
-            <input type="text" placeholder="Username" className="w-full border px-3 py-2 rounded" />
-            <input type="email" placeholder="Email" className="w-full border px-3 py-2 rounded" />
-            <input type="password" placeholder="Password" className="w-full border px-3 py-2 rounded" />
+        {/* Sign Up Modal */}
+        {showSignup && (
+          <Modal title="Sign Up" onClose={() => setShowSignup(false)}>
+            <form className="space-y-4" onSubmit={handleRegister}>
+              <input type="text" placeholder="Username" className="w-full border px-3 py-2 rounded" required />
+              <input type="email" placeholder="Email" className="w-full border px-3 py-2 rounded" required />
+              <input type="password" placeholder="Password" className="w-full border px-3 py-2 rounded" required />
+              <input type="text" placeholder="Contact Name (Optional)" className="w-full border px-3 py-2 rounded" />
+              <input type="text" placeholder="Phone (Optional)" className="w-full border px-3 py-2 rounded" />
+              <input type="text" placeholder="Company Name (Optional)" className="w-full border px-3 py-2 rounded" />
+              <input type="text" placeholder="Address (Optional)" className="w-full border px-3 py-2 rounded" />
 
-            {/* Embedded Pay Subscription Fields */}
-            <div className="bg-gray-50 p-4 rounded border space-y-3">
-              <h3 className="text-sm font-semibold text-gray-700">Pay Subscription (Optional)</h3>
+              <button
+                type="button"
+                onClick={() => setShowPay(true)}
+                className="w-full border border-indigo-600 text-indigo-600 py-2 rounded-md hover:bg-indigo-50"
+              >
+                Pay Subscription (Optional)
+              </button>
+
+              <button
+                type="submit"
+                className="w-full bg-indigo-600 text-white py-2 rounded hover:bg-indigo-700"
+              >
+                Register
+              </button>
+            </form>
+          </Modal>
+        )}
+
+        {/* Pay Modal */}
+        {showPay && (
+          <Modal title="Pay Subscription" onClose={() => setShowPay(false)}>
+            <form className="space-y-4">
               <input type="text" placeholder="Card Number" className="w-full border px-3 py-2 rounded" />
               <input type="text" placeholder="Name on Card" className="w-full border px-3 py-2 rounded" />
               <div className="flex space-x-2">
                 <input type="text" placeholder="MM/YY" className="w-1/2 border px-3 py-2 rounded" />
                 <input type="text" placeholder="CVV" className="w-1/2 border px-3 py-2 rounded" />
               </div>
-            </div>
-
-            <button className="w-full bg-indigo-600 text-white py-2 rounded hover:bg-indigo-700">
-              Register
-            </button>
-          </form>
-        </Modal>
-      )}
-
+              <button className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700">
+                Pay Now
+              </button>
+            </form>
+          </Modal>
+        )}
 
         {/* Forgot Password Modal */}
         {showForgot && (

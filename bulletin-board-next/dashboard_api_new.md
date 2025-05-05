@@ -678,44 +678,41 @@ json
 []
 ```
 
-#  Auth 认证与登录模块接口文档（正式版）
+# 📄 Authentication 接口文档（登录 & 注册）
 
 ---
 
-## 公共信息
+## 🔐 注册用户（Register）
 
-* **接口前缀**：`/api/auth`
-* **数据格式**：请求（Request）和响应（Response）都使用 `application/json`
-* **认证方式**：登录成功返回 Token，需在后续请求中携带 `Authorization: Bearer <token>`
-* **权限控制**：注册接口对所有人开放；登录后根据角色鉴权
+### 接口说明
 
----
+* **URL**：`POST /api/auth/register`
+* **内容类型**：`application/json`
+* **认证**：不需要 Token
 
-## 1. 登录 Login
+### 请求参数
 
-### 接口
-
-```http
-POST /api/auth/login
-```
-
-### 描述
-
-用户登录系统，验证用户名与密码，成功后返回访问令牌。
-
-### 请求体（Body）
-
-| 字段         | 类型     | 是否必填 | 说明          |
-| ---------- | ------ | ---- | ----------- |
-| `username` | string | 是    | 用户名         |
-| `password` | string | 是    | 密码（明文或前端加密） |
+| 字段名           | 类型     | 必填 | 描述       |
+| ------------- | ------ | -- | -------- |
+| `username`    | string | 是  | 登录用户名，唯一 |
+| `email`       | string | 是  | 用户邮箱，唯一  |
+| `password`    | string | 是  | 用户密码（明文） |
+| `contactName` | string | 否  | 联系人姓名    |
+| `phone`       | string | 否  | 联系电话     |
+| `companyName` | string | 否  | 公司名称     |
+| `address`     | string | 否  | 公司地址     |
 
 ### 请求示例
 
 ```json
 {
-  "username": "admin",
-  "password": "1234"
+  "username": "testuser1",
+  "email": "testuser1@example.com",
+  "password": "SecureP@ssword123",
+  "contactName": "Alice Chen",
+  "phone": "1234567890",
+  "companyName": "Example Tech Ltd.",
+  "address": "123 Orchard Road, Singapore"
 }
 ```
 
@@ -723,46 +720,33 @@ POST /api/auth/login
 
 ```json
 {
-  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "user": {
-    "id": "1",
-    "username": "admin",
-    "role": "Admin"
-  }
+  "message": "Registration successful"
 }
 ```
 
 ---
 
-## 2. 注册 Sign Up
+## 🔓 登录用户（Login）
 
-### 接口
+### 接口说明
 
-```http
-POST /api/users
-```
+* **URL**：`POST /api/auth/login`
+* **内容类型**：`application/json`
+* **认证**：不需要 Token
 
-### 描述
+### 请求参数
 
-注册新用户账号，用于系统登录。
-
-### 请求体（Body）
-
-| 字段         | 类型     | 是否必填 | 说明            |
-| ---------- | ------ | ---- | ------------- |
-| `username` | string | 是    | 用户名           |
-| `email`    | string | 是    | 邮箱地址（唯一）      |
-| `password` | string | 是    | 登录密码          |
-| `role`     | string | 否    | 用户角色（默认：User） |
+| 字段名        | 类型     | 必填 | 描述       |
+| ---------- | ------ | -- | -------- |
+| `username` | string | 是  | 登录用户名    |
+| `password` | string | 是  | 用户密码（明文） |
 
 ### 请求示例
 
 ```json
 {
-  "username": "new_user",
-  "email": "newuser@example.com",
-  "password": "password123",
-  "role": "User"
+  "username": "testuser1",
+  "password": "SecureP@ssword123"
 }
 ```
 
@@ -770,12 +754,12 @@ POST /api/users
 
 ```json
 {
-  "message": "User created successfully",
-  "userId": "2"
+  "token": "eyJhbGciOiJIUzI1NiJ9..."
 }
 ```
 
 ---
+
 
 ## 3. 忘记密码 Forgot Password
 
