@@ -9,11 +9,33 @@ const Login = () => {
   const [showForgot, setShowForgot] = useState(false);
   const [showPay, setShowPay] = useState(false);
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    if (username === "admin" && password === "1234") {
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ username, password }),
+      });
+  
+      // ✅ 打印调试信息
+      console.log("Response status:", res.status);
+      const text = await res.text();
+      console.log("Response body:", text);
+  
+      if (!res.ok) {
+        throw new Error("Login failed");
+      }
+  
+      const data = JSON.parse(text); // 不再使用 res.json() 避免已消费错误
+      const token = data.token;
+  
+      localStorage.setItem("authToken", token);
       router.push("/dashboard");
-    } else {
+    } catch (error) {
+      console.error("Login error:", error);
       alert("Incorrect username or password.");
     }
   };
