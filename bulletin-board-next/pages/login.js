@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useRouter } from "next/router";
+import jwt_decode from "jwt-decode";  // ✅ 用这个，重新安装后就不报错了
 
 const Login = () => {
   const router = useRouter();
@@ -19,20 +20,26 @@ const Login = () => {
         },
         body: JSON.stringify({ username, password }),
       });
-  
-      // ✅ 打印调试信息
+
       console.log("Response status:", res.status);
       const text = await res.text();
       console.log("Response body:", text);
-  
+
       if (!res.ok) {
         throw new Error("Login failed");
       }
-  
-      const data = JSON.parse(text); // 不再使用 res.json() 避免已消费错误
+
+      const data = JSON.parse(text);
       const token = data.token;
-  
+
+      // ✅ 解码 JWT 拿到用户信息
+      const decoded = jwt_decode(token);
+
+      // ✅ 存储 token 和用户信息（可跨页复用）
       localStorage.setItem("authToken", token);
+      localStorage.setItem("authUsername", decoded.username);
+      localStorage.setItem("authRole", decoded.role);
+
       router.push("/dashboard");
     } catch (error) {
       console.error("Login error:", error);
@@ -156,5 +163,3 @@ const Modal = ({ title, children, onClose }) => {
 };
 
 export default Login;
-
-

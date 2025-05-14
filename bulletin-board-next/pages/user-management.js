@@ -1,7 +1,28 @@
 import Sidebar from "../components/Sidebar";
 import { useState } from "react";
+import { useEffect } from "react";
+import { useRouter } from "next/router";
 
 export default function Usermanagement() {
+  const router = useRouter();
+
+  useEffect(() => {
+    const token = localStorage.getItem("authToken");
+    const role = localStorage.getItem("authRole");
+    console.log(role);
+    
+    if (!token) {
+      alert("Please log in first.");
+      // router.push("/login");
+      return;
+    }
+
+    if (role !== "admin") {
+      alert("Access denied: Admins only.");
+      // router.push("/dashboard");
+    }
+  }, []);
+
   const [searchKeyword, setSearchKeyword] = useState("");
   const [roleFilter, setRoleFilter] = useState("");
   const [users, setUsers] = useState([]); // 暂时空数据
