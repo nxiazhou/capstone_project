@@ -2,6 +2,9 @@ import React, { useState } from "react";
 import { useRouter } from "next/router";
 import jwt_decode from "jwt-decode";  // ✅ 用这个，重新安装后就不报错了
 
+const API_BASE = "http://8.210.165.181:8081"; // auth-service 端口
+const PAYMENT_API = "http://8.210.165.181:8085/api/payments/subscribe";
+
 const Login = () => {
   const router = useRouter();
   const [username, setUsername] = useState("");
@@ -10,14 +13,26 @@ const Login = () => {
   const [showForgot, setShowForgot] = useState(false);
   const [showPay, setShowPay] = useState(false);
 
+  // 支付表单状态
+  const [cardInfo, setCardInfo] = useState({ cardNumber: "", cardName: "", expiry: "", cvv: "" });
+
+  // 注册表单状态
+  const [signupForm, setSignupForm] = useState({
+    username: "",
+    email: "",
+    password: "",
+    contactName: "",
+    phone: "",
+    companyName: "",
+    address: "",
+  });
+
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch("/api/auth/login", {
+      const res = await fetch(`/api/auth/login`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password }),
       });
 
@@ -41,9 +56,54 @@ const Login = () => {
       localStorage.setItem("authRole", decoded.role);
 
       router.push("/dashboard");
-    } catch (error) {
-      console.error("Login error:", error);
+    } catch (err) {
+      console.error(err);
       alert("Incorrect username or password.");
+    }
+  };
+
+  const handleRegister = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await fetch(`/api/auth/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(signupForm),
+      });
+      if (!res.ok) throw new Error("Registration failed");
+      alert("Registration successful");
+      setShowSignup(false);
+    } catch (err) {
+      alert("Failed to register");
+    }
+  };
+
+  const handleForgot = async (email) => {
+    try {
+      const res = await fetch(`/api/auth/forgot-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json();
+      alert(data.message);
+    } catch {
+      alert("Failed to send reset link");
+    }
+  };
+
+  const handlePay = async () => {
+    try {
+      const res = await fetch(`/api/payments/subscribe`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(cardInfo),
+      });
+      const data = await res.json();
+      alert(data.message);
+      setShowPay(false);
+    } catch {
+      alert("Payment failed");
     }
   };
 
@@ -55,32 +115,21 @@ const Login = () => {
             Welcome Digital Data Distribution Display Platform
           </h1>
           <form onSubmit={handleLogin} className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Username</label>
-              <input
-                type="text"
-                className="w-full px-4 py-2 border border-gray-300 rounded-md"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder="Enter username"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
-              <input
-                type="password"
-                className="w-full px-4 py-2 border border-gray-300 rounded-md"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter password"
-                required
-              />
-            </div>
-            <button
-              type="submit"
-              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 rounded-md"
-            >
+            <input
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="Username"
+              className="w-full border px-3 py-2 rounded"
+            />
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Password"
+              className="w-full border px-3 py-2 rounded"
+            />
+            <button className="w-full bg-indigo-600 text-white py-2 rounded hover:bg-indigo-700">
               Login
             </button>
             <div className="flex justify-between text-sm text-indigo-700 mt-4">
@@ -93,22 +142,25 @@ const Login = () => {
 
       {showSignup && (
         <Modal title="Sign Up" onClose={() => setShowSignup(false)}>
-          <form className="space-y-3">
-            <input type="text" placeholder="Username" className="w-full border px-3 py-2 rounded" />
-            <input type="email" placeholder="Email" className="w-full border px-3 py-2 rounded" />
-            <input type="password" placeholder="Password" className="w-full border px-3 py-2 rounded" />
-            <input type="text" placeholder="Contact Name (Optional)" className="w-full border px-3 py-2 rounded" />
-            <input type="text" placeholder="Phone (Optional)" className="w-full border px-3 py-2 rounded" />
-            <input type="text" placeholder="Company Name (Optional)" className="w-full border px-3 py-2 rounded" />
-            <input type="text" placeholder="Address (Optional)" className="w-full border px-3 py-2 rounded" />
+          <form className="space-y-3" onSubmit={handleRegister}>
+            {Object.entries(signupForm).map(([k, v]) => (
+              <input
+                key={k}
+                type={k === "email" ? "email" : k === "password" ? "password" : "text"}
+                placeholder={k[0].toUpperCase() + k.slice(1) + (k !== "contactName" && k !== "phone" && k !== "companyName" && k !== "address" ? "" : " (Optional)")}
+                value={signupForm[k]}
+                onChange={(e) => setSignupForm({ ...signupForm, [k]: e.target.value })}
+                className="w-full border px-3 py-2 rounded"
+              />
+            ))}
             <button
               type="button"
-              className="w-full border border-indigo-600 text-indigo-600 py-2 rounded-md hover:bg-indigo-50"
               onClick={() => setShowPay(true)}
+              className="w-full border border-indigo-600 text-indigo-600 py-2 rounded-md hover:bg-indigo-50"
             >
               Pay Subscription (Optional)
             </button>
-            <button className="w-full bg-indigo-600 text-white py-2 rounded hover:bg-indigo-700">
+            <button type="submit" className="w-full bg-indigo-600 text-white py-2 rounded hover:bg-indigo-700">
               Register
             </button>
           </form>
@@ -117,9 +169,9 @@ const Login = () => {
 
       {showForgot && (
         <Modal title="Forgot Password" onClose={() => setShowForgot(false)}>
-          <form className="space-y-4">
-            <input type="email" placeholder="Enter your email" className="w-full border px-3 py-2 rounded" />
-            <button className="w-full bg-indigo-600 text-white py-2 rounded hover:bg-indigo-700">
+          <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); handleForgot(e.target.email.value); }}>
+            <input name="email" type="email" placeholder="Enter your email" className="w-full border px-3 py-2 rounded" />
+            <button type="submit" className="w-full bg-indigo-600 text-white py-2 rounded hover:bg-indigo-700">
               Send Reset Link
             </button>
           </form>
@@ -128,14 +180,14 @@ const Login = () => {
 
       {showPay && (
         <Modal title="Pay Subscription" onClose={() => setShowPay(false)}>
-          <form className="space-y-4">
-            <input type="text" placeholder="Card Number" className="w-full border px-3 py-2 rounded" />
-            <input type="text" placeholder="Name on Card" className="w-full border px-3 py-2 rounded" />
+          <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); handlePay(); }}>
+            <input type="text" placeholder="Card Number" value={cardInfo.cardNumber} onChange={(e) => setCardInfo({ ...cardInfo, cardNumber: e.target.value })} className="w-full border px-3 py-2 rounded" />
+            <input type="text" placeholder="Name on Card" value={cardInfo.cardName} onChange={(e) => setCardInfo({ ...cardInfo, cardName: e.target.value })} className="w-full border px-3 py-2 rounded" />
             <div className="flex space-x-2">
-              <input type="text" placeholder="MM/YY" className="w-1/2 border px-3 py-2 rounded" />
-              <input type="text" placeholder="CVV" className="w-1/2 border px-3 py-2 rounded" />
+              <input type="text" placeholder="MM/YY" value={cardInfo.expiry} onChange={(e) => setCardInfo({ ...cardInfo, expiry: e.target.value })} className="w-1/2 border px-3 py-2 rounded" />
+              <input type="text" placeholder="CVV" value={cardInfo.cvv} onChange={(e) => setCardInfo({ ...cardInfo, cvv: e.target.value })} className="w-1/2 border px-3 py-2 rounded" />
             </div>
-            <button className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700">
+            <button type="submit" className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700">
               Pay Now
             </button>
           </form>
