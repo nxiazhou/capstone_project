@@ -174,7 +174,7 @@ const Login = () => {
             <button className="w-full bg-indigo-600 text-white py-2 rounded hover:bg-indigo-700">
               Login
             </button>
-            {/* <p>Test</p> */}
+            <p>Test</p>
             <div className="flex justify-between text-sm text-indigo-700 mt-4">
               <button type="button" onClick={() => setShowSignup(true)}>Sign up</button>
               <button type="button" onClick={() => setShowForgot(true)}>Forgot password?</button>

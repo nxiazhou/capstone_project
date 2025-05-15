@@ -98,41 +98,43 @@ export default function Usermanagement() {
   };
 
   const handleSubmit = async () => {
-    const token = localStorage.getItem("authToken");
-    const url = isEditing
-      ? `/api/admin/users/${formData.userId}`
-      : "/api/admin/users";
+  const token = localStorage.getItem("authToken");
+  const url = isEditing
+    ? `/api/admin/users/${formData.userId}`
+    : "/api/admin/users";
 
-    const method = isEditing ? "PUT" : "POST";
+  const method = isEditing ? "PUT" : "POST";
 
-    const payload = {
-      username: formData.username,
-      email: formData.email,
-      role: formData.role,
-      phone: formData.phone,
-      address: formData.address,
-      companyName: formData.companyName,
-      ...(formData.password && { password: formData.password }),
-      ...(!isEditing && { contactName: formData.username })
-    };
+  const payload = {
+    username: formData.username,
+    email: formData.email,
+    password: formData.password || undefined, // 添加这个可选逻辑
+    contactName: formData.username,
+    phone: formData.phone,
+    address: formData.address,
+    companyName: formData.companyName,
+    role: formData.role
+  };
 
-    const res = await fetch(url, {
-      method,
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(payload),
-    });
+  const res = await fetch(url, {
+    method,
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(payload),
+  });
+  
 
-    const text = await res.text();
-    if (res.ok) {
-      alert(isEditing ? "User updated." : "User added.");
-      setShowModal(false);
-      window.location.reload();
-    } else {
-      alert("Error: " + text);
-    }
+  const text = await res.text();
+  if (res.ok) {
+    alert(isEditing ? "User updated." : "User added.");
+    setShowModal(false);
+    window.location.reload();
+  } else {
+    alert("Error: " + text);
+    console.error("❌ Update error:", text);
+  }
   };
 
   const handleDelete = async (userId, username, role) => {
