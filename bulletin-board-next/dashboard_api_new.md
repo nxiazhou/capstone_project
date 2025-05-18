@@ -307,289 +307,229 @@ json
 
 
 
-# 📄 Schedule Management 模块接口文档（正式版）
----
-
-## 公共信息
-+ **接口前缀**：`/api/schedules`
-+ **数据格式**：请求（Request）和响应（Response）都使用 `application/json`
-+ **认证方式**：需要携带认证 Token
-+ **权限控制**：仅管理员角色（Admin）可以访问
+# 📄 Dashboard, Content Management, Schedule Management API Documentation
 
 ---
 
-## 1. 获取播放计划列表
-### 接口
-```plain
-http
+## Dashboard APIs
 
+### 1. 获取统计信息
+```http
+GET /api/dashboard/stats
+```
+**描述**：获取平台总内容数、总计划数、总用户数、待审核内容数等统计数据。
 
-复制编辑
-GET /api/schedules
+**响应示例**：
+```json
+{
+  "totalContents": 128,
+  "totalSchedules": 42,
+  "totalUsers": 15,
+  "pendingAudits": 3,
+  "approvedContents": 120,
+  "rejectedContents": 5
+}
 ```
 
-### 描述
-查询所有播放计划，支持分页、关键词搜索（按名称/文件名）和日期筛选。
+---
 
-### 请求参数（Query）
-| 参数 | 类型 | 是否必填 | 说明 |
-| --- | --- | --- | --- |
-| `page` | int | 否 | 页码，默认 1 |
-| `limit` | int | 否 | 每页数量，默认 10 |
-| `search` | string | 否 | 搜索关键词（按名称或文件名模糊搜索） |
-| `startDate` | string (ISO Date) | 否 | 筛选起始日期 |
-| `endDate` | string (ISO Date) | 否 | 筛选结束日期 |
+## Content Management APIs
 
+### 1. 获取内容列表
+```http
+GET /api/contents?page=1&limit=10&search=xxx&type=video
+```
+**描述**：分页获取内容列表，支持按名称、类型搜索。
+
+**响应示例**：
+```json
+{
+  "contents": [
+    {
+      "id": "1",
+      "name": "Promo Video",
+      "mediaType": "video",
+      "url": "https://www.example.com/video1.mp4",
+      "uploadTime": "2024-06-01T10:00:00Z",
+      "auditStatus": "pending",
+      "violationType": "none"
+    }
+  ],
+  "totalPages": 2
+}
+```
+
+### 2. 获取内容详情
+```http
+GET /api/contents/{id}
+```
+**描述**：根据内容ID获取详细信息。
+
+**响应示例**：
+```json
+{
+  "id": "1",
+  "name": "Promo Video",
+  "mediaType": "video",
+  "url": "https://www.example.com/video1.mp4",
+  "uploadTime": "2024-06-01T10:00:00Z",
+  "auditStatus": "pending",
+  "violationType": "none"
+}
+```
+
+### 3. 新建内容
+```http
+POST /api/contents
+Content-Type: application/json
+{
+  "name": "Event Poster",
+  "mediaType": "image",
+  "url": "https://www.example.com/image1.jpg"
+}
+```
+**响应示例**：
+```json
+{
+  "message": "Content created successfully",
+  "contentId": "2"
+}
+```
+
+### 4. 更新内容
+```http
+PUT /api/contents/{id}
+Content-Type: application/json
+{
+  "name": "Updated Poster",
+  "mediaType": "image",
+  "url": "https://www.example.com/image1.jpg"
+}
+```
+**响应示例**：
+```json
+{
+  "message": "Content updated successfully"
+}
+```
+
+### 5. 删除内容
+```http
+DELETE /api/contents/{id}
+```
+**响应示例**：
+```json
+{
+  "message": "Content deleted successfully"
+}
+```
 
 ---
 
-### 响应示例
-```plain
-json
+## Schedule Management APIs
 
+### 1. 获取计划列表
+```http
+GET /api/schedules?page=1&limit=10&search=xxx&date=2024-06-01&status=Scheduled
+```
+**描述**：分页获取计划列表，支持按名称、文件名、日期、状态搜索。
+- `search`：按名称或媒体类型模糊搜索
+- `date`：筛选开始时间为指定日期的计划（格式：YYYY-MM-DD）
+- `status`：筛选计划状态（Scheduled/Pending/Completed）
 
-复制编辑
+**响应示例**：
+```json
 {
   "schedules": [
     {
-      "id": "101",
+      "id": 1,
       "name": "Morning Promotion",
       "mediaType": "video",
-      "fileUrl": "https://example.com/videos/promo.mp4",
-      "startTime": "2025-04-28T08:00:00Z",
-      "endTime": "2025-04-28T10:00:00Z",
-      "status": "Scheduled",
-      "createdAt": "2025-04-26T10:00:00Z"
+      "startTime": "2024-06-10T08:00",
+      "endTime": "2024-06-10T10:00",
+      "status": "Scheduled"
+    },
+    {
+      "id": 2,
+      "name": "Event Poster",
+      "mediaType": "image",
+      "startTime": "2024-06-11T09:00",
+      "endTime": "2024-06-11T18:00",
+      "status": "Completed"
     }
   ],
-  "pagination": {
-    "total": 30,
-    "page": 1,
-    "limit": 10
-  }
+  "totalPages": 1
 }
 ```
 
----
-
-## 2. 获取单个播放计划详情
-### 接口
-```plain
-http
-
-
-复制编辑
+### 2. 获取计划详情
+```http
 GET /api/schedules/{id}
 ```
+**描述**：根据计划ID获取详细信息。
 
-### 描述
-根据播放计划ID查询详细信息。
-
-### 路径参数
-| 参数 | 类型 | 是否必填 | 说明 |
-| --- | --- | --- | --- |
-| `id` | string | 是 | 播放计划ID |
-
-
----
-
-### 响应示例
-```plain
-json
-
-
-复制编辑
+**响应示例**：
+```json
 {
-  "id": "101",
+  "id": 1,
   "name": "Morning Promotion",
   "mediaType": "video",
-  "fileUrl": "https://example.com/videos/promo.mp4",
-  "startTime": "2025-04-28T08:00:00Z",
-  "endTime": "2025-04-28T10:00:00Z",
-  "status": "Scheduled",
-  "createdAt": "2025-04-26T10:00:00Z"
+  "startTime": "2024-06-10T08:00",
+  "endTime": "2024-06-10T10:00",
+  "status": "Scheduled"
 }
 ```
 
----
-
-## 3. 创建新的播放计划
-### 接口
-```plain
-http
-
-
-复制编辑
+### 3. 新建计划
+```http
 POST /api/schedules
-```
-
-### 描述
-新增一个播放排期，比如安排某个视频/图片在某个时间段播放。
-
-### 请求体（Body）
-| 字段 | 类型 | 是否必填 | 说明 |
-| --- | --- | --- | --- |
-| `name` | string | 是 | 播放计划名称 |
-| `mediaType` | string | 是 | 媒体类型（可选值：`video`<br/>、`image`<br/>） |
-| `fileUrl` | string | 是 | 媒体文件地址（URL） |
-| `startTime` | string (ISO DateTime) | 是 | 开始播放时间 |
-| `endTime` | string (ISO DateTime) | 是 | 结束播放时间 |
-
-
----
-
-### 请求示例
-```plain
-json
-
-
-复制编辑
+Content-Type: application/json
 {
   "name": "Lunch Break Video",
   "mediaType": "video",
-  "fileUrl": "https://example.com/videos/lunch.mp4",
-  "startTime": "2025-04-28T12:00:00Z",
-  "endTime": "2025-04-28T13:00:00Z"
+  "startTime": "2024-06-12T12:00",
+  "endTime": "2024-06-12T13:00",
+  "status": "Scheduled"
 }
 ```
-
----
-
-### 响应示例
-```plain
-json
-
-
-复制编辑
+**响应示例**：
+```json
 {
   "message": "Schedule created successfully",
-  "scheduleId": "102"
+  "scheduleId": 3
 }
 ```
 
----
-
-## 4. 更新播放计划
-### 接口
-```plain
-http
-
-
-复制编辑
+### 4. 更新计划
+```http
 PUT /api/schedules/{id}
-```
-
-### 描述
-更新指定播放计划的信息，比如修改时间或换一个新的媒体。
-
-### 路径参数
-| 参数 | 类型 | 是否必填 | 说明 |
-| --- | --- | --- | --- |
-| `id` | string | 是 | 播放计划ID |
-
-
----
-
-### 请求体（Body）
-| 字段 | 类型 | 是否必填 | 说明 |
-| --- | --- | --- | --- |
-| `name` | string | 否 | 播放计划名称 |
-| `mediaType` | string | 否 | 媒体类型（`video`<br/> 或 `image`<br/>） |
-| `fileUrl` | string | 否 | 媒体文件地址 |
-| `startTime` | string (ISO DateTime) | 否 | 开始时间 |
-| `endTime` | string (ISO DateTime) | 否 | 结束时间 |
-| `status` | string | 否 | 状态（`Scheduled`<br/> / `Paused`<br/> / `Completed`<br/>） |
-
-
----
-
-### 请求示例
-```plain
-json
-
-
-复制编辑
+Content-Type: application/json
 {
   "name": "Updated Lunch Video",
-  "startTime": "2025-04-28T12:30:00Z",
-  "endTime": "2025-04-28T13:30:00Z"
+  "startTime": "2024-06-12T12:30",
+  "endTime": "2024-06-12T13:30",
+  "status": "Completed"
 }
 ```
-
----
-
-### 响应示例
-```plain
-json
-
-
-复制编辑
+**响应示例**：
+```json
 {
   "message": "Schedule updated successfully"
 }
 ```
 
----
-
-## 5. 删除播放计划
-### 接口
-```plain
-http
-
-
-复制编辑
+### 5. 删除计划
+```http
 DELETE /api/schedules/{id}
 ```
-
-### 描述
-删除一个播放安排。
-
-### 路径参数
-| 参数 | 类型 | 是否必填 | 说明 |
-| --- | --- | --- | --- |
-| `id` | string | 是 | 播放计划ID |
-
-
----
-
-### 响应示例
-```plain
-json
-
-
-复制编辑
+**响应示例**：
+```json
 {
   "message": "Schedule deleted successfully"
 }
 ```
 
 ---
-
-# 🛢️ Schedule 数据库表设计（Schedule Table）
-表名：`schedules`
-
-| 字段名 | 类型 | 约束 | 描述 |
-| --- | --- | --- | --- |
-| `id` | BIGINT / UUID | 主键，自增 / UUID | 播放计划唯一ID |
-| `name` | VARCHAR(100) | 不为空 | 播放计划名称 |
-| `mediaType` | ENUM('video', 'image') | 不为空 | 媒体类型 |
-| `fileUrl` | VARCHAR(255) | 不为空 | 媒体文件地址（URL） |
-| `startTime` | DATETIME | 不为空 | 播放开始时间 |
-| `endTime` | DATETIME | 不为空 | 播放结束时间 |
-| `status` | ENUM('Scheduled', 'Paused', 'Completed') | 默认 'Scheduled' | 当前排期状态 |
-| `created_at` | DATETIME | 默认当前时间 | 创建时间 |
-| `updated_at` | DATETIME | 自动更新时间 | 最后更新时间 |
-
-
----
-
-# 📌 小结
-这样你的 **Schedule Management** API和数据库字段就非常完整了✅，而且：
-
-+ 每条播放计划都能指定：**播放什么**、**从什么时候到什么时候**。
-+ 支持不同类型的媒体：**视频**、**图片**。
-+ 可以随时更新、删除播放排期。
-+ 前端可以直接用分页 + 搜索接口来加载安排表格。
 
 # 📄 `/api/schedules?current=true` 接口文档（专门给 Home 页使用）
 ---
@@ -632,7 +572,7 @@ GET /api/schedules?current=true
 + 比如：
     - `offsetBefore = 5`，`offsetAfter = 5`
     - 那么：设备会提前5分钟开始播放，结束后5分钟之内也还算有效播放窗口。
-    - 这样可以防止因为设备时钟差异出现“空白播放”的情况。
+    - 这样可以防止因为设备时钟差异出现"空白播放"的情况。
 
 ---
 
@@ -842,3 +782,5 @@ POST /api/payments/subscribe
 ## 📝 小结
 
 该模块提供用户基础认证操作，包括注册、登录、密码找回与付费订阅功能，为系统安全与用户接入提供统一接口标准。
+
+---

@@ -12,6 +12,8 @@ const Login = () => {
   const [showSignup, setShowSignup] = useState(false);
   const [showForgot, setShowForgot] = useState(false);
   const [showPay, setShowPay] = useState(false);
+  const [loginError, setLoginError] = useState("");
+  const [signupError, setSignupError] = useState("");
 
   // 支付表单状态
   const [cardInfo, setCardInfo] = useState({ cardNumber: "", cardName: "", expiry: "", cvv: "" });
@@ -29,6 +31,18 @@ const Login = () => {
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    setLoginError("");
+
+    // 验证必填字段
+    if (!username.trim()) {
+      setLoginError("Please enter username");
+      return;
+    }
+    if (!password.trim()) {
+      setLoginError("Please enter password");
+      return;
+    }
+
     try {
       const res = await fetch(`/api/auth/login`, {
         method: "POST",
@@ -58,12 +72,35 @@ const Login = () => {
       router.push("/dashboard");
     } catch (err) {
       console.error(err);
-      alert("Incorrect username or password.");
+      setLoginError("Invalid username or password");
     }
   };
 
   const handleRegister = async (e) => {
     e.preventDefault();
+    setSignupError("");
+
+    // 验证必填字段
+    const requiredFields = {
+      username: "username",
+      email: "email",
+      password: "password"
+    };
+
+    for (const [field, label] of Object.entries(requiredFields)) {
+      if (!signupForm[field].trim()) {
+        setSignupError(`Please enter ${label}`);
+        return;
+      }
+    }
+
+    // 验证邮箱格式
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(signupForm.email)) {
+      setSignupError("Please enter a valid email address");
+      return;
+    }
+
     try {
       const res = await fetch(`/api/auth/register`, {
         method: "POST",
@@ -74,7 +111,7 @@ const Login = () => {
       alert("Registration successful");
       setShowSignup(false);
     } catch (err) {
-      alert("Failed to register");
+      setSignupError("Registration failed. Please try again later");
     }
   };
 
@@ -114,19 +151,24 @@ const Login = () => {
           <h1 className="text-2xl font-bold text-center mb-6 text-slate-800">
             Welcome Digital Data Distribution Display Platform
           </h1>
+          {loginError && (
+            <div className="mb-4 p-2 bg-red-100 text-red-700 rounded">
+              {loginError}
+            </div>
+          )}
           <form onSubmit={handleLogin} className="space-y-6">
             <input
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              placeholder="Username"
+              placeholder="Username *"
               className="w-full border px-3 py-2 rounded"
             />
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Password"
+              placeholder="Password *"
               className="w-full border px-3 py-2 rounded"
             />
             <button className="w-full bg-indigo-600 text-white py-2 rounded hover:bg-indigo-700">
@@ -142,12 +184,21 @@ const Login = () => {
 
       {showSignup && (
         <Modal title="Sign Up" onClose={() => setShowSignup(false)}>
+          {signupError && (
+            <div className="mb-4 p-2 bg-red-100 text-red-700 rounded">
+              {signupError}
+            </div>
+          )}
           <form className="space-y-3" onSubmit={handleRegister}>
             {Object.entries(signupForm).map(([k, v]) => (
               <input
                 key={k}
                 type={k === "email" ? "email" : k === "password" ? "password" : "text"}
-                placeholder={k[0].toUpperCase() + k.slice(1) + (k !== "contactName" && k !== "phone" && k !== "companyName" && k !== "address" ? "" : " (Optional)")}
+                placeholder={
+                  (k === "username" || k === "email" || k === "password" ? "* " : "") +
+                  (k[0].toUpperCase() + k.slice(1)) +
+                  (k !== "contactName" && k !== "phone" && k !== "companyName" && k !== "address" ? "" : " (Optional)")
+                }
                 value={signupForm[k]}
                 onChange={(e) => setSignupForm({ ...signupForm, [k]: e.target.value })}
                 className="w-full border px-3 py-2 rounded"
