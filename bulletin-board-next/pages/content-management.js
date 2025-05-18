@@ -1,6 +1,7 @@
 import Sidebar from "../components/Sidebar";
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 
 const mockContents = [
   {
@@ -475,7 +476,7 @@ export default function ContentManagement() {
         {previewContent && (
           <Modal title={previewContent.name} onClose={() => setPreviewContent(null)}>
             {previewContent.mediaType === "image" ? (
-              <img src={previewContent.url} alt={previewContent.name} className="w-full max-h-96 object-contain" />
+              <Image src={previewContent.url} alt={previewContent.name} width={400} height={300} className="w-full max-h-96 object-contain" />
             ) : (
               <video src={previewContent.url} controls className="w-full max-h-96" />
             )}
