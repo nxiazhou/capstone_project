@@ -1,7 +1,8 @@
 📚 capstone_project 操作指南
 
 GitHub 仓库地址：👉 https://github.com/nxiazhou/capstone_project
-前端的地址：http://52.221.51.195:3000/login
+
+前端地址：http://52.221.51.195:3000/login
 # 1.运行&仓库操作
 ## 1. 如何在本地运行项目（首次安装）
 
