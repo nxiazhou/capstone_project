@@ -116,7 +116,7 @@ npm run test
 npm install --save-dev cypress --legacy-peer-deps
 ```
 
-#### ▶️ 打开 Cypress 图形界面
+#### ▶️ 用另一个终端！！打开 Cypress 图形界面
 
 ```bash
 npx cypress open
