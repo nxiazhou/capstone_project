@@ -5,7 +5,9 @@ export default function Home() {
   const router = useRouter();
 
   useEffect(() => {
-    router.push('/login');
+    if (router.pathname !== '/login') {
+      router.push('/login');
+    }
   }, [router]);
 
   return null; // 页面跳转中
