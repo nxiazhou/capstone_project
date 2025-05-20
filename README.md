@@ -3,6 +3,12 @@
 GitHub 仓库地址：👉 https://github.com/nxiazhou/capstone_project
 
 前端地址：http://52.221.51.195:3000/login
+
+Jenkis: http://52.221.51.195:8080
+
+    Username: admin 
+    Password: aa271886045f4224844ad4f5699bf30b 
+
 # 1.运行&仓库操作
 ## 1. 如何在本地运行项目（首次安装）
 
