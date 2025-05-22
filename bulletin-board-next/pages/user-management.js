@@ -26,9 +26,16 @@ export default function Usermanagement() {
     companyName: ""
   });
 
+
+
+  
   useEffect(() => {
     const token = localStorage.getItem("authToken");
     const storedRole = localStorage.getItem("authRole");
+
+  
+    console.log(token);
+    
 
     if (!token) {
       alert("Please log in first.");
