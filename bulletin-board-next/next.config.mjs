@@ -17,6 +17,14 @@ const nextConfig = {
         source: "/api/admin/:path*",
         destination: "http://8.210.165.181:8081/api/admin/:path*",
       },
+      {
+        source: '/api/schedules/:path*',
+        destination: 'http://8.210.165.181:8087/api/schedules/:path*',
+      },
+      {
+        source: '/api/files/:path*',
+        destination: 'http://8.210.165.181:8083/api/files/:path*' // 真实服务地址
+      }
     ];
   },
 };

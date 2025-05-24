@@ -28,6 +28,12 @@ export default function Sidebar() {
                   <Link href="/content-management">
           <span className="hover:text-blue-500 cursor-pointer">🎬 Content Management</span>
           </Link>
+          <Link href="/device-management">
+            <span className="hover:text-blue-500 cursor-pointer">🖥️ Device Management</span>
+          </Link>
+          <Link href="/player">
+            <span className="hover:text-blue-500 cursor-pointer">▶️ Content Player</span>
+          </Link>
         </nav>
       </div>
 
