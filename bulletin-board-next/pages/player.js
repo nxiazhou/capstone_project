@@ -3,27 +3,6 @@ import Image from 'next/image';
 import { useRouter } from 'next/router';
 import Sidebar from "../components/Sidebar";
 
-const mockSchedules = [
-  {
-    id: 1,
-    name: "Morning Promotion",
-    mediaType: "video",
-    url: "https://www.w3schools.com/html/mov_bbb.mp4",
-    startTime: "2024-06-10T08:00",
-    endTime: "2024-06-10T10:00",
-    status: "Scheduled",
-  },
-  {
-    id: 2,
-    name: "Event Poster",
-    mediaType: "image",
-    url: "/images/sample-poster.jpg",
-    startTime: "2024-06-11T09:00",
-    endTime: "2024-06-11T18:00",
-    status: "Scheduled",
-  }
-];
-
 export default function Player() {
   const router = useRouter();
   const { scheduleId } = router.query;
@@ -36,16 +15,15 @@ export default function Player() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showControls, setShowControls] = useState(true);
   const [controlsTimeout, setControlsTimeout] = useState(null);
+  const [startTime, setStartTime] = useState(null);
+  const [endTime, setEndTime] = useState(null);
 
   const currentContent = contents[currentIndex];
 
+  // ✅ 获取调度详情（包含 startTime 和 endTime）
   useEffect(() => {
     const fetchScheduleDetail = async () => {
-      if (!scheduleId) {
-        // fallback mock data
-        setContents(mockSchedules);
-        return;
-      }
+      if (!scheduleId) return;
 
       try {
         const token = localStorage.getItem("authToken");
@@ -58,6 +36,9 @@ export default function Player() {
         if (!res.ok) throw new Error("Failed to fetch schedule");
 
         const data = await res.json();
+
+        setStartTime(new Date(data.startTime));
+        setEndTime(new Date(data.endTime));
 
         const items = data.contents.map(item => ({
           id: item.id,
@@ -75,6 +56,28 @@ export default function Player() {
     fetchScheduleDetail();
   }, [scheduleId]);
 
+  // ✅ 控制是否允许播放：时间范围内才播放
+  useEffect(() => {
+    const timer = setInterval(() => {
+      const now = new Date();
+      if (startTime && endTime) {
+        const inRange = now >= startTime && now <= endTime;
+        if (!inRange) {
+          setIsPlaying(false);
+          if (videoRef.current) videoRef.current.pause();
+        } else {
+          if (!isPlaying && videoRef.current) {
+            setIsPlaying(true);
+            videoRef.current.play();
+          }
+        }
+      }
+    }, 10000); // 每 10 秒检查一次
+
+    return () => clearInterval(timer);
+  }, [startTime, endTime, isPlaying]);
+
+  // ✅ 控制 image 自动播放
   useEffect(() => {
     if (!currentContent || !isPlaying) return;
 
@@ -90,6 +93,7 @@ export default function Player() {
     };
   }, [currentContent, isPlaying]);
 
+  // ✅ 全屏切换监听
   useEffect(() => {
     const handleFullscreenChange = () => {
       setIsFullscreen(!!document.fullscreenElement);
@@ -128,8 +132,7 @@ export default function Player() {
   const handlePlayPause = () => {
     setIsPlaying(!isPlaying);
     if (videoRef.current) {
-      if (isPlaying) videoRef.current.pause();
-      else videoRef.current.play();
+      isPlaying ? videoRef.current.pause() : videoRef.current.play();
     }
   };
 
@@ -147,7 +150,7 @@ export default function Player() {
 
   const handleExit = () => {
     if (isFullscreen) toggleFullscreen();
-    router.push('/dashboard');
+    router.push('/schedule-management');
   };
 
   if (!currentContent) return <div className="text-white p-10">Loading schedule content...</div>;
@@ -160,7 +163,6 @@ export default function Player() {
         className="flex-1 bg-black flex flex-col items-center justify-center relative"
         onMouseMove={handleMouseMove}
       >
-        {/* Exit */}
         <button
           onClick={handleExit}
           className={`absolute top-4 left-4 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 z-10 ${
@@ -170,7 +172,6 @@ export default function Player() {
           Exit Player
         </button>
 
-        {/* Fullscreen */}
         <button
           onClick={toggleFullscreen}
           className={`absolute top-4 right-4 bg-gray-800 text-white px-3 py-1 rounded hover:bg-gray-700 z-10 ${
@@ -180,31 +181,29 @@ export default function Player() {
           {isFullscreen ? '⤓ Exit Fullscreen' : '⤢ Fullscreen'}
         </button>
 
-        {/* 播放区域 */}
         <div className={`w-full ${isFullscreen ? 'h-full' : 'max-w-6xl aspect-video'} bg-gray-900 relative`}>
           {currentContent.mediaType === 'video' ? (
             <video
               ref={videoRef}
               src={currentContent.url}
               className="w-full h-full object-contain"
-              controls={false}
+              controls
               autoPlay
-              onEnded={handleNext}
+              playsInline
               muted
+              onEnded={handleNext}
             />
           ) : (
             <div className="w-full h-full relative">
-              <Image
+              <img
                 src={currentContent.url}
                 alt={currentContent.name}
-                layout="fill"
-                objectFit="contain"
+                className="w-full h-full object-contain"
               />
             </div>
           )}
         </div>
 
-        {/* 控制栏 */}
         <div
           className={`w-full ${isFullscreen ? 'absolute bottom-0 bg-opacity-80' : 'max-w-6xl'} bg-gray-800 p-4 flex flex-col gap-4 transition-opacity duration-300 ${
             isFullscreen && !showControls ? 'opacity-0' : 'opacity-100'

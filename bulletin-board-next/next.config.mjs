@@ -2,6 +2,11 @@
 const nextConfig = {
   reactStrictMode: true,
 
+    // ✅ 添加允许加载外部图片的域名
+  images: {
+    domains: ['dddd-platform.oss-ap-southeast-1.aliyuncs.com'], // 替换为你自己的 OSS 域名
+  },
+  
   async rewrites() {
     return [
       {

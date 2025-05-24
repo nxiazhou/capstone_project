@@ -12,6 +12,7 @@
     "cypress:run": "cypress run"
   },
   "dependencies": {
+    "ali-oss": "^6.23.0",
     "axios": "^1.9.0",
     "jwt-decode": "^3.1.2",
     "next": "15.3.1",
