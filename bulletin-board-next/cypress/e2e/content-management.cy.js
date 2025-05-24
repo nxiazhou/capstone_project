@@ -44,8 +44,8 @@ describe('Content Management Page', () => {
     
     // 等待文件输入框出现并上传文件
     cy.get('input[type="file"]').should('exist').then(($input) => {
-      // 创建测试文件
-      const testFile = new File(['test content'], 'test-file.txt', { type: 'text/plain' });
+      // 创建测试图片文件
+      const testFile = new File(['test content'], 'test-image.jpg', { type: 'image/jpeg' });
       const dataTransfer = new DataTransfer();
       dataTransfer.items.add(testFile);
       $input[0].files = dataTransfer.files;
