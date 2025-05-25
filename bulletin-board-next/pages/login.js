@@ -174,6 +174,11 @@ const Login = () => {
             <button className="w-full bg-indigo-600 text-white py-2 rounded hover:bg-indigo-700">
               Login
             </button>
+            <div className="text-center mt-4">
+              <span className="inline-block bg-yellow-300 text-black px-3 py-1 text-sm font-semibold rounded shadow-md">
+                TEST
+              </span>
+            </div>
             {/* <p>Test</p> */}
             <div className="flex justify-between text-sm text-indigo-700 mt-4">
               <button type="button" onClick={() => setShowSignup(true)}>Sign up</button>
