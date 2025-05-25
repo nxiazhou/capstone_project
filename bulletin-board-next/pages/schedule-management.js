@@ -5,7 +5,7 @@ import Pagination from "../components/Pagination";
 import Select from "react-select";
 import { useMemo } from "react";
 import { useRouter } from "next/router";
-
+import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 
 export default function ScheduleManagement() {
   const router = useRouter();
@@ -21,7 +21,7 @@ export default function ScheduleManagement() {
   const [pageSize, setPageSize] = useState(10);
   const [error, setError] = useState("");
   const [contentOptions, setContentOptions] = useState([]);
-  const [selectedContentIds, setSelectedContentIds] = useState([]);
+  const [selectedContents, setSelectedContents] = useState([]);
   const [selectedPanelIds, setSelectedPanelIds] = useState([]);
   const panelOptions = [
     { value: 1, label: "Panel 1" },
@@ -30,9 +30,12 @@ export default function ScheduleManagement() {
 
   // memo 处理已选内容项
   const selectedContentOptions = useMemo(() => {
-    if (!contentOptions.length || !selectedContentIds.length) return [];
-    return contentOptions.filter(opt => selectedContentIds.includes(opt.value));
-  }, [contentOptions, selectedContentIds]);
+    if (!contentOptions.length || !selectedContents.length) return [];
+    return selectedContents
+      .sort((a, b) => a.orderNo - b.orderNo)
+      .map(item => contentOptions.find(opt => opt.value === item.id))
+      .filter(Boolean);
+  }, [contentOptions, selectedContents]);
 
   const selectedPanelOptions = useMemo(() => {
     if (!panelOptions.length || !selectedPanelIds.length) return [];
@@ -96,12 +99,20 @@ export default function ScheduleManagement() {
             }))
           );
 
-          // 设置已选 contentIds
           if (selectedSchedule?.contents) {
-            setSelectedContentIds(selectedSchedule.contents.map((c) => c.id));
-          } else {
-            setSelectedContentIds([]);
+            const ordered = selectedSchedule.contents
+              .sort((a, b) => a.order_no - b.order_no)
+              .map((c) => ({
+                id: c.id,
+                label: `${c.originalName} (ID: ${c.id})`,
+                orderNo: c.orderNo  // ✅ 不要删
+              }));
+
+              console.log("🔍 selectedContents from backend:", ordered); // ✅ 打印出来检查结构
+              setSelectedContents(ordered);
           }
+                       
+                 
 
           // 设置已选 panelIds
           if (selectedSchedule?.panels) {
@@ -130,7 +141,7 @@ export default function ScheduleManagement() {
 
   const handleAddNew = () => {
     setSelectedSchedule(null);
-    setSelectedContentIds([]);
+    setSelectedContents([]); // ✅ 这是你想要做的：清空内容
     setShowForm(true);
   };
 
@@ -186,32 +197,54 @@ export default function ScheduleManagement() {
   const handleSave = async (formData) => {
     try {
       const token = localStorage.getItem("authToken");
-      const method = formData.id ? "PUT" : "POST";
-      const url = formData.id
+      const isEdit = !!formData.id;
+      const method = isEdit ? "PUT" : "POST";
+      const url = isEdit
         ? `/api/schedules/${formData.id}`
         : `/api/schedules`;
+
+      const payload = {
+        name: formData.name,
+        startTime: formData.startTime,
+        endTime: formData.endTime,
+        repeatType: formData.repeatType,
+        priority: formData.priority,
+        contents: selectedContents.map((item, index) => ({
+          contentId: item.id,
+          orderNo: index + 1,
+        })),
+        panelIds: selectedPanelIds,
+      };
+
+      console.log("📤 正在保存调度：", {
+        method,
+        url,
+        payload,
+      });
 
       const res = await fetch(url, {
         method,
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
+          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          ...formData,
-          contentIds: selectedContentIds
-        })
+        body: JSON.stringify(payload),
       });
 
-      if (!res.ok) throw new Error(await res.text());
+      if (!res.ok) {
+        const errText = await res.text();
+        throw new Error(`服务器返回错误: ${errText}`);
+      }
 
       setShowForm(false);
       fetchSchedules();
     } catch (err) {
-      console.error("Error saving schedule:", err);
-      setError("Failed to save schedule");
+      console.error("保存调度时发生错误：", err);
+      setError("Failed to save schedule: " + err.message);
     }
   };
+
+
 
   return (
     <div className="flex">
@@ -316,8 +349,8 @@ export default function ScheduleManagement() {
         />
 
         {showForm && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white p-6 rounded shadow-lg w-full max-w-xl">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+            <div className="bg-white p-6 rounded shadow-lg w-full max-w-xl max-h-[90vh] overflow-y-auto">
               <h2 className="text-xl font-bold mb-4">
                 {selectedSchedule ? "Edit Schedule" : "Add Schedule"}
               </h2>
@@ -332,7 +365,7 @@ export default function ScheduleManagement() {
                     endTime: form.endTime.value,
                     repeatType: form.repeatType.value,
                     priority: parseInt(form.priority.value),
-                    contentIds: selectedContentIds,
+                    contentIds: selectedContents.map((item) => item.id),
                     panelIds: selectedPanelIds,
                   };
                   handleSave(formData);
@@ -367,7 +400,7 @@ export default function ScheduleManagement() {
                   <label className="block mb-1 font-semibold" htmlFor="priority">Priority (1~10)</label>
                   <input id="priority" name="priority" type="number" min={1} max={10} placeholder="e.g. 1 to 10" defaultValue={selectedSchedule?.priority || 1} className="w-full border px-3 py-2 rounded" />
                 </div>
-
+                
                 <div>
                   <label className="block mb-1 font-semibold" htmlFor="contentIds">Select Content Files</label>
                   <Select
@@ -375,10 +408,79 @@ export default function ScheduleManagement() {
                     name="contentIds"
                     isMulti
                     options={contentOptions}
-                    value={selectedContentOptions}
-                    onChange={(selected) => setSelectedContentIds(selected.map(opt => opt.value))}
+                    value={selectedContents
+                      .sort((a, b) => a.orderNo - b.orderNo)
+                      .map(item => contentOptions.find(opt => opt.value === item.id))
+                      .filter(Boolean)}
+                    onChange={(selected) => {
+                    // 新选择的 id 列表
+                    const selectedIds = selected.map(opt => opt.value);
+
+                    // 保留原有的顺序信息
+                    const contentMap = new Map(selectedContents.map(item => [item.id, item]));
+
+                    // 构建新的顺序数组
+                    const updated = selectedIds.map((id, index) => {
+                      const existing = contentMap.get(id);
+                      return {
+                        id,
+                        label: selected.find(opt => opt.value === id).label,
+                        orderNo: existing?.orderNo ?? index + 1,
+                      };
+                    });
+
+                    // 强制排序一遍
+                    updated.sort((a, b) => a.orderNo - b.orderNo);
+
+                    console.log("🧾 updated from Select onChange (preserving orderNo):", updated);
+                    setSelectedContents(updated);
+                  }}
                     className="w-full"
                   />
+                  <DragDropContext
+                    onDragEnd={(result) => {
+                      if (!result.destination) return;
+
+                      const reordered = Array.from(selectedContents);
+                      const [moved] = reordered.splice(result.source.index, 1);
+                      reordered.splice(result.destination.index, 0, moved);
+
+                      const withOrder = reordered.map((item, index) => ({
+                        ...item,
+                        orderNo: index + 1,
+                      }));
+
+                      console.log("🧪 reordered with orderNo:", withOrder); // 这一行才会输出
+                      setSelectedContents(withOrder);
+                    }}
+                  >
+                    <Droppable droppableId="content-list" isDropDisabled={false} isCombineEnabled={false}  ignoreContainerClipping={false}>
+                      {(provided) => (
+                        <div
+                          {...provided.droppableProps}
+                          ref={provided.innerRef}
+                          className="mt-2 border rounded-lg p-2"
+                        >
+                          {selectedContents.map((item, index) => (
+                            <Draggable key={item.id} draggableId={String(item.id)} index={index}>
+                              {(provided) => (
+                                <div
+                                  ref={provided.innerRef}
+                                  {...provided.draggableProps}
+                                  {...provided.dragHandleProps}
+                                  className="bg-gray-50 p-2 mb-2 rounded flex items-center"
+                                >
+                                  <span className="mr-2">#{index + 1}</span>
+                                  {item.label}
+                                </div>
+                              )}
+                            </Draggable>
+                          ))}
+                          {provided.placeholder}
+                        </div>
+                      )}
+                    </Droppable>
+                  </DragDropContext>
                 </div>
 
                 <div>

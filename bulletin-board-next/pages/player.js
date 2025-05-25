@@ -40,7 +40,10 @@ export default function Player() {
         setStartTime(new Date(data.startTime));
         setEndTime(new Date(data.endTime));
 
-        const items = data.contents.map(item => ({
+      // ✅ 根据 orderNo 排序
+      const items = data.contents
+        .sort((a, b) => a.orderNo - b.orderNo)
+        .map(item => ({
           id: item.id,
           name: item.originalName,
           url: item.url,
