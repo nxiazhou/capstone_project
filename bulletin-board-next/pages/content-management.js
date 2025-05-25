@@ -20,15 +20,10 @@ export default function ContentManagement() {
           Authorization: `Bearer ${token}`
         }
       });
-      
-
-      
 
       if (!response.ok) throw new Error("Failed to fetch");
 
       const data = await response.json();
-      console.log(data);
-      
       setFiles(data);
     } catch (err) {
       console.error('Error fetching files:', err);
@@ -139,12 +134,19 @@ export default function ContentManagement() {
                   <td className="px-6 py-4">{file.originalName}</td>
                   <td className="px-6 py-4">{new Date(file.uploadedAt).toLocaleString()}</td>
                   <td className="px-6 py-4">
-                    <a href={file.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
-                      View
+                    <a
+                      href={file.url}
+                      download
+                      className="text-blue-600 hover:underline"
+                    >
+                      Download
                     </a>
                   </td>
                   <td className="px-6 py-4">
-                    <button onClick={() => handleDelete(file.id)} className="text-red-600 hover:underline">
+                    <button
+                      onClick={() => handleDelete(file.id)}
+                      className="text-red-600 hover:underline"
+                    >
                       Delete
                     </button>
                   </td>
