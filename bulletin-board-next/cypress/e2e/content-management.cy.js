@@ -1,3 +1,5 @@
+// cypress/e2e/content-management.cy.js
+
 describe('Content Management Page', () => {
   beforeEach(() => {
     // 登录操作
@@ -11,14 +13,11 @@ describe('Content Management Page', () => {
 
     // 通过 sidebar 进入 content management 页面
     cy.contains('Content Management').click();
-    
-    // 等待页面加载
     cy.contains('Content Management').should('be.visible');
   });
 
   it('should show content management page and Upload button', () => {
     cy.contains('Content Management').should('be.visible');
-    // 使用label文本查找按钮
     cy.contains('Upload File').should('be.visible');
   });
 
@@ -34,89 +33,95 @@ describe('Content Management Page', () => {
 
   it('should open upload file modal', () => {
     cy.contains('Upload File').click();
-    // 等待文件输入框出现
     cy.get('input[type="file"]').should('exist');
   });
 
   it('should upload file (mock)', () => {
-    // 点击上传按钮
     cy.contains('Upload File').click();
-    
-    // 等待文件输入框出现并上传文件
     cy.get('input[type="file"]').should('exist').then(($input) => {
-      // 创建测试图片文件
       const testFile = new File(['test content'], 'test-image.jpg', { type: 'image/jpeg' });
       const dataTransfer = new DataTransfer();
       dataTransfer.items.add(testFile);
       $input[0].files = dataTransfer.files;
       cy.wrap($input).trigger('change', { force: true });
     });
-
-    // 等待上传完成
-    cy.wait(2000); // 给予足够的时间让文件上传
+    cy.wait(2000);
   });
 
   it('should search for files', () => {
     const searchTerm = 'test';
-    cy.get('input[placeholder="Search by file name..."]')
-      .type(searchTerm);
-    // 等待搜索结果更新
+    cy.get('input[placeholder="Search by file name..."]').type(searchTerm);
     cy.wait(1000);
   });
 
-  // 如果有文件时才运行这些测试
   context('with existing files', () => {
     beforeEach(() => {
-      // 等待文件列表加载
       cy.wait(1000);
     });
 
     it('should preview file', () => {
-      // 检查是否有文件存在
       cy.get('table tbody tr').then($rows => {
         if ($rows.length > 0) {
-          // 使用View链接预览文件
           cy.get('table tbody tr').first().contains('View').click();
         }
       });
     });
 
-    it('should delete file', () => {
-      // 检查是否有文件存在
-      cy.get('table tbody tr').then($rows => {
-        if ($rows.length > 0) {
-          // 点击删除按钮
-          cy.get('table tbody tr').first().contains('Delete').click();
-          // 处理确认对话框
-          cy.on('window:confirm', () => true);
-          // 等待删除操作完成
-          cy.wait(1000);
-        }
-      });
-    });
-
-    it('should show file details', () => {
-      // 检查是否有文件存在
-      cy.get('table tbody tr').then($rows => {
-        if ($rows.length > 0) {
-          // 验证文件详情
-          cy.get('table tbody tr').first().within(() => {
-            cy.get('td').should('have.length.at.least', 3);
-            cy.get('td').eq(0).should('not.be.empty'); // 文件名
-            cy.get('td').eq(1).should('not.be.empty'); // 上传时间
-          });
-        }
-      });
-    });
-  });
-
-  // 空状态测试
-  it('should handle empty content list', () => {
-    // 如果没有文件，应该显示空表格
+  it('should delete file', () => {
     cy.get('table tbody tr').then($rows => {
-      if ($rows.length === 0) {
-        cy.get('table tbody').should('be.empty');
+      if ($rows.length > 0) {
+        cy.get('table tbody tr').first().contains('Delete').click();
+        cy.on('window:confirm', () => true);
+        cy.wait(1000);
+      } else {
+        // 🔁 如果没有文件，上传 test.png 并删除
+        cy.fixture('test.png', 'base64').then(fileContent => {
+          const token = localStorage.getItem('authToken');
+          cy.request({
+            method: 'POST',
+            url: '/api/files/upload',
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+            body: {
+              file: {
+                fileName: 'test.png',
+                mimeType: 'image/png',
+                contents: fileContent,
+              },
+            },
+            form: true
+          }).then(() => {
+            cy.reload();
+            cy.wait(1000);
+            cy.get('table tbody tr').first().contains('Delete').click();
+            cy.on('window:confirm', () => true);
+          });
+        });
       }
     });
   });
-}); 
+
+  it('should show file details if any exist', () => {
+    cy.get('table tbody').then($tbody => {
+      const $rows = $tbody.find('tr');
+      if ($rows.length > 0) {
+        cy.wrap($rows[0]).within(() => {
+          cy.get('td').should('have.length.at.least', 3);
+          cy.get('td').eq(0).should('not.be.empty');
+          cy.get('td').eq(1).should('not.be.empty');
+        });
+      } else {
+        cy.log('No files to show details');
+      }
+    });
+  });
+
+  });
+
+it('should handle empty content list', () => {
+  cy.get('table tbody').then($tbody => {
+    expect($tbody.find('tr').length).to.eq(0);  // ✅ 没有 tr 就通过
+  });
+});
+});
