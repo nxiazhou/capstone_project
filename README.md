@@ -2,7 +2,38 @@
 
 GitHub 仓库地址：👉 https://github.com/nxiazhou/capstone_project
 
-前端地址：http://52.221.51.195:3000/login
+旧前端地址：http://52.221.51.195:3000/login
+
+新前端地址:http://47.97.211.83:3000/login
+
+本地ssh命令 ssh -i "C:/develop/ssh/Dddd2025.pem" root@47.97.211.83
+
+linux用户:
+
+    root Dddd2025
+    jenkins Dddd2025
+
+jenkins:
+
+    admin f99b635e9a0c419491da7fdeb3546316
+    dddd Dddd2025
+
+
+新的cicd原理：
+
+    代码提交 (Git) 
+        ↓
+    Jenkins 触发流水线 (Pipeline)
+        ↓
+    拉取代码 → 编译 → 测试 → 打包 Docker 镜像
+        ↓
+    推送镜像到镜像仓库（Docker Hub、阿里云镜像等）
+        ↓
+    Jenkins 执行 kubectl 命令
+        ↓
+    Kubernetes 集群拉取最新镜像并更新 Pod
+        ↓
+    应用自动更新，访问新的版本
 
 Admin账号:
 
