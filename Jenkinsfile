@@ -3,22 +3,30 @@ pipeline {
 
   environment {
     NODE_ENV = 'production'
+    APP_DIR = 'bulletin-board-next'
   }
 
   stages {
-    stage('Clone') {
+    stage('Checkout') {
       steps {
         echo '📥 Cloning repository...'
-        git url: 'git@github.com:nxiazhou/capstone_project.git', branch: 'main', credentialsId: 'dddd'
+        checkout scm
       }
     }
 
-    stage('Install Dependencies') {
+    stage('Install Dependencies If Needed') {
       steps {
-        echo '📦 Installing dependencies...'
-        dir('bulletin-board-next') {
-          sh 'rm -rf node_modules package-lock.json'
-          sh 'npm install --include=dev'
+        echo '📦 Checking for package.json changes...'
+        dir("${APP_DIR}") {
+          script {
+            def packageChanged = sh(script: 'git diff --name-only HEAD~1 HEAD | grep package.json || true', returnStdout: true).trim()
+            if (packageChanged) {
+              echo '🔁 package.json changed, reinstalling dependencies...'
+              sh 'npm install'
+            } else {
+              echo '✅ package.json unchanged, skipping npm install.'
+            }
+          }
         }
       }
     }
@@ -26,21 +34,17 @@ pipeline {
     stage('Build') {
       steps {
         echo '🔨 Building Next.js app...'
-        dir('bulletin-board-next') {
+        dir("${APP_DIR}") {
           sh 'npm run build'
         }
       }
     }
 
-    stage('Start with PM2') {
+    stage('Start App') {
       steps {
-        echo '🚀 Starting app with PM2...'
-        dir('bulletin-board-next') {
-          sh '''
-            pm2 delete bulletin-board-next || true
-            pm2 start node_modules/next/dist/bin/next --name "bulletin-board-next" -- start -p 3000 -H 0.0.0.0
-            pm2 save
-          '''
+        echo '🚀 Starting app with npm start...'
+        dir("${APP_DIR}") {
+          sh 'npm run start'
         }
       }
     }
