@@ -7,17 +7,13 @@ pipeline {
 
     stages {
 
-        stage('Force Bash') {
-            steps {
-                sh 'bash'
-            }
-        }
         stage('Check Shell') {
             steps {
-                sh 'echo $0'    // 输出当前使用的 shell
-                sh 'readlink -f $(which sh)'  // 更精确地显示 sh 指向哪里
+                sh 'echo $0'                // 输出当前 shell
+                sh 'readlink -f $(which sh)' // 显示 /bin/sh 的真实链接
             }
         }
+
         stage('Who Am I') {
             steps {
                 sh 'whoami'
@@ -40,32 +36,35 @@ pipeline {
             }
         }
 
-        stage('Install Dependencies') {
+        stage('Install & Build with Bash') {
             steps {
-                echo '📦 Installing dependencies...'
                 dir('bulletin-board-next') {
-                    sh 'npm install'
-                    sh 'npm install -D tailwindcss postcss autoprefixer'
-                    sh 'npm install -D eslint'
+                    sh '''#!/bin/bash
+                    echo "📦 Setting npm registry..."
+                    npm config set registry https://registry.npmmirror.com
+
+                    echo "📦 Installing dependencies..."
+                    npm install --include=dev --unsafe-perm
+
+                    echo "📦 Installing Tailwind & ESLint..."
+                    npm install -D tailwindcss postcss autoprefixer
+                    npm install -D eslint
+
+                    echo "🔨 Building Next.js app..."
+                    npm run build
+                    '''
                 }
             }
         }
 
-        stage('Build') {
+        stage('Start App in Background') {
             steps {
-                echo '🔨 Building Next.js app...'
+                echo '🚀 Starting Next.js app in background...'
                 dir('bulletin-board-next') {
-                    sh 'npm run build'
-                }
-            }
-        }
-
-        stage('Start App') {
-            steps {
-                echo '🚀 Starting Next.js app...'
-                dir('bulletin-board-next') {
-                    // 启动建议用 pm2 或后台模式防止 pipeline 阻塞
-                    sh 'nohup npm run start &'
+                    sh '''#!/bin/bash
+                    echo "📤 Launching app with nohup..."
+                    nohup npm run start > app.log 2>&1 &
+                    '''
                 }
             }
         }
