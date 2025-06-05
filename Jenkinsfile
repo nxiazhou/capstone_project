@@ -18,13 +18,7 @@ pipeline {
                 echo '📦 Checking for package.json changes...'
                 dir('bulletin-board-next') {
                     script {
-                        def changed = sh(script: "git diff --name-only HEAD~1 HEAD | grep package.json || true", returnStdout: true).trim()
-                        if (changed) {
-                            echo '🔁 Detected changes in package.json, clearing node_modules...'
-                            sh 'rm -rf node_modules'
-                        } else {
-                            echo '✅ No changes in package.json, skipping node_modules cleanup.'
-                        }
+                        sh 'git pull origin main'
 
                         echo '📦 Installing dependencies...'
                         sh 'npm install'
