@@ -27,10 +27,12 @@ pipeline {
             steps {
                 dir('bulletin-board-next') {
                     echo '📦 Installing project dependencies'
+                    // ✅ 安装所有依赖，包括 devDependencies
                     sh 'npm install --include=dev'
 
-                    echo '📦 Installing TailwindCSS and ESLint'
-                    sh 'npm install -D tailwindcss postcss autoprefixer eslint'
+                    echo '📦 Installing TailwindCSS, PostCSS, and ESLint explicitly'
+                    // ✅ 手动安装缺失的 devDependencies
+                    sh 'npm install --save-dev eslint @tailwindcss/postcss'
 
                     echo '🔨 Building Next.js project'
                     sh 'npm run build'
