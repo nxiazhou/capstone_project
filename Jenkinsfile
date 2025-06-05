@@ -15,24 +15,41 @@ pipeline {
 
         stage('Install Dependencies') {
             steps {
-                echo '📦 Installing dependencies...'
-                sh 'npm install @tailwindcss/postcss --save-dev'
-                sh 'npm install --save-dev eslint'
-                sh 'npm install'
+                echo '📦 Checking for package.json changes...'
+                dir('bulletin-board-next') {
+                    script {
+                        def changed = sh(script: "git diff --name-only HEAD~1 HEAD | grep package.json || true", returnStdout: true).trim()
+                        if (changed) {
+                            echo '🔁 Detected changes in package.json, clearing node_modules...'
+                            sh 'rm -rf node_modules'
+                        } else {
+                            echo '✅ No changes in package.json, skipping node_modules cleanup.'
+                        }
+
+                        echo '📦 Installing dependencies...'
+                        sh 'npm install @tailwindcss/postcss --save-dev'
+                        sh 'npm install --save-dev eslint'
+                        sh 'npm install'
+                    }
+                }
             }
         }
 
         stage('Build') {
             steps {
                 echo '🔨 Building Next.js app...'
-                sh 'npm run build'
+                dir('bulletin-board-next') {
+                    sh 'npm run build'
+                }
             }
         }
 
         stage('Start App') {
             steps {
                 echo '🚀 Starting Next.js app...'
-                sh 'npm run start'
+                dir('bulletin-board-next') {
+                    sh 'npm run start'
+                }
             }
         }
     }
