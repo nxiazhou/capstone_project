@@ -14,36 +14,33 @@ pipeline {
             }
         }
 
-        stage('🧹 Clean Cache') {
+        stage('📦 Install Dependencies') {
             steps {
                 dir('bulletin-board-next') {
-                    echo '🧹 Removing node_modules and .next'
-                    sh 'rm -rf node_modules .next'
+                    echo '📦 Installing all dependencies including dev'
+                    sh '''
+                        npm ci || npm install --include=dev
+                        npm install --save-dev eslint @tailwindcss/postcss
+                        echo "✅ npm dependencies installed"
+                        npm ls @tailwindcss/postcss || echo "❌ not installed"
+                    '''
                 }
             }
         }
 
-        stage('📦 Install Dependencies & Build') {
+        stage('🔨 Build Project') {
             steps {
                 dir('bulletin-board-next') {
-                    echo '📦 Installing project dependencies'
-                    // ✅ 安装所有依赖，包括 devDependencies
-                    sh 'npm install --include=dev'
-
-                    echo '📦 Installing TailwindCSS, PostCSS, and ESLint explicitly'
-                    // ✅ 手动安装缺失的 devDependencies
-                    sh 'npm install --save-dev eslint @tailwindcss/postcss'
-
-                    echo '🔨 Building Next.js project'
+                    echo '🔨 Building Next.js app'
                     sh 'npm run build'
                 }
             }
         }
 
-        stage('🚀 Launch with PM2') {
+        stage('🚀 Run with PM2') {
             steps {
                 dir('bulletin-board-next') {
-                    echo '🚀 Restarting app with PM2'
+                    echo '🚀 Restarting with PM2'
                     sh '''
                         pm2 delete next-app || true
                         pm2 start npm --name "next-app" -- run start
