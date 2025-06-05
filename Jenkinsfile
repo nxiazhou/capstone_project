@@ -27,8 +27,6 @@ pipeline {
                         }
 
                         echo '📦 Installing dependencies...'
-                        sh 'npm install @tailwindcss/postcss --save-dev'
-                        sh 'npm install --save-dev eslint'
                         sh 'npm install'
                     }
                 }
