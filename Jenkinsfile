@@ -13,6 +13,15 @@ pipeline {
       }
     }
 
+    stage('Fix Permissions') {
+      steps {
+        echo '🔧 Fixing permissions before install...'
+        dir('bulletin-board-next') {
+          sh 'sudo chown -R jenkins:jenkins . || true'
+        }
+      }
+    }
+
     stage('Install Dependencies') {
       steps {
         echo '📦 Installing dependencies...'
@@ -35,11 +44,8 @@ pipeline {
       steps {
         echo '🚀 Starting Next.js app in background...'
         dir('bulletin-board-next') {
-          // 旧服务可选 kill
           sh 'pkill -f "next start" || true'
-          // 后台启动
           sh 'nohup npm run start -- -p 3000 -H 0.0.0.0 > output.log 2>&1 &'
-          // 等待端口就绪
           sh '''
             for i in {1..20}; do
               curl -s http://localhost:3000 > /dev/null && break
