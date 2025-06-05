@@ -20,9 +20,7 @@ pipeline {
                     echo '📦 Installing all dependencies including dev'
                     sh '''
                         npm ci || npm install --include=dev
-                        npm install --save-dev eslint @tailwindcss/postcss
                         echo "✅ npm dependencies installed"
-                        npm ls @tailwindcss/postcss || echo "❌ not installed"
                     '''
                 }
             }
