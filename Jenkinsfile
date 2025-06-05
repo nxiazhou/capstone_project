@@ -34,6 +34,7 @@ pipeline {
                 echo '📦 Installing dependencies...'
                 dir('bulletin-board-next') {
                     sh 'npm install'
+                    sh 'npm install --save-dev eslint @tailwindcss/postcss postcss postcss-loader autoprefixer'
                 }
             }
         }
