@@ -7,6 +7,15 @@ pipeline {
 
     stages {
 
+        stage('Force Bash') {
+            steps {
+                sh '''#!/bin/bash
+                echo "Running with bash"
+                whoami
+                sudo rm -rf node_modules .next
+                '''
+            }
+        }
         stage('Check Shell') {
             steps {
                 sh 'echo $0'    // 输出当前使用的 shell
