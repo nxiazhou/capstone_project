@@ -20,7 +20,9 @@ pipeline {
                     echo '📦 Installing all dependencies including dev'
                     sh '''
                         npm ci || npm install --include=dev
+                        npm install --save-dev eslint autoprefixer tailwindcss
                         echo "✅ npm dependencies installed"
+                        npm ls autoprefixer || echo "❌ autoprefixer not installed"
                     '''
                 }
             }
