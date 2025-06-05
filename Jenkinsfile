@@ -7,12 +7,10 @@ pipeline {
 
     stages {
 
-          stages {
-            stage('Check Shell') {
+        stage('Check Shell') {
             steps {
                 sh 'echo $0'    // 输出当前使用的 shell
                 sh 'readlink -f $(which sh)'  // 更精确地显示 sh 指向哪里
-            }
             }
         }
         stage('Who Am I') {
