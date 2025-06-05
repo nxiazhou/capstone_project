@@ -6,7 +6,13 @@ GitHub 仓库地址：👉 https://github.com/nxiazhou/capstone_project
 
 新前端地址:http://47.97.211.83:3000/login
 
-本地ssh命令 ssh -i "C:/develop/ssh/Dddd2025.pem" root@47.97.211.83
+本地ssh命令
+
+    ssh -i "C:/develop/ssh/Dddd2025.pem" root@47.97.211.83
+
+jenkins工作目录:   
+
+    /var/lib/jenkins/workspace/dddd_bullet_dashboard
 
 linux用户:
 
