@@ -17,13 +17,15 @@ pipeline {
         stage('📦 Install Dependencies') {
             steps {
                 dir('bulletin-board-next') {
-                    echo '📦 Installing all dependencies including dev'
+                    echo '📦 Installing all dependencies'
                     sh '''
+                        # 删除旧的依赖项和构建缓存
                         rm -rf node_modules package-lock.json .next
-                        npm install --include=dev
-                        npm install --save-dev eslint autoprefixer tailwindcss
+
+                        # 安装所有依赖，包括 devDependencies
+                        npm install
+                        
                         echo "✅ npm dependencies installed"
-                        npm ls autoprefixer || echo "❌ autoprefixer not installed"
                     '''
                 }
             }
@@ -43,7 +45,9 @@ pipeline {
                 dir('bulletin-board-next') {
                     echo '🚀 Restarting with PM2'
                     sh '''
+                        # 删除旧的 PM2 进程，防止冲突
                         pm2 delete next-app || true
+                        # 使用 PM2 启动应用
                         pm2 start npm --name "next-app" -- run start
                         pm2 save
                     '''
