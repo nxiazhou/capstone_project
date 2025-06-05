@@ -24,7 +24,7 @@ pipeline {
             steps {
                 echo '🧹 Removing old cache...'
                 dir('bulletin-board-next') {
-                    sh 'sudo rm -rf node_modules .next'
+                    sh 'rm -rf node_modules'
                 }
             }
         }
