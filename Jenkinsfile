@@ -26,7 +26,8 @@ pipeline {
       steps {
         echo '📦 Installing dependencies...'
         dir('bulletin-board-next') {
-          sh 'npm install'
+          sh 'npm install'  // Install all dependencies
+          sh 'npm install @tailwindcss/postcss'  // Explicitly install @tailwindcss/postcss
         }
       }
     }
