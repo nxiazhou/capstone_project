@@ -9,11 +9,7 @@ pipeline {
 
         stage('Force Bash') {
             steps {
-                sh '''#!/bin/bash
-                echo "Running with bash"
-                whoami
-                sudo rm -rf node_modules .next
-                '''
+                sh 'bash'
             }
         }
         stage('Check Shell') {
