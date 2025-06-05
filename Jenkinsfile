@@ -14,13 +14,13 @@ pipeline {
     }
 
     stage('Install Dependencies') {
-      steps {
+    steps {
         echo '📦 Installing dependencies...'
         dir('bulletin-board-next') {
-          // ⚠️ 必须安装 devDependencies
-          sh 'npm install --include=dev'
+        sh 'rm -rf node_modules package-lock.json' // ⚠️ 可选但建议清理旧依赖
+        sh 'npm install --include=dev'
         }
-      }
+    }
     }
 
     stage('Build') {
