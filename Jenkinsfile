@@ -6,6 +6,13 @@ pipeline {
     }
 
     stages {
+
+        stage('Who Am I') {
+            steps {
+                sh 'whoami'
+            }
+        }
+
         stage('Checkout') {
             steps {
                 echo '📥 Cloning repository...'
@@ -13,17 +20,20 @@ pipeline {
             }
         }
 
+        stage('Clean Cache') {
+            steps {
+                echo '🧹 Removing old cache...'
+                dir('bulletin-board-next') {
+                    sh 'rm -rf node_modules .next'
+                }
+            }
+        }
+
         stage('Install Dependencies') {
             steps {
-                echo '📦 Checking for package.json changes...'
+                echo '📦 Installing dependencies...'
                 dir('bulletin-board-next') {
-                    script {
-                        sh 'git pull origin main'
-                        echo '📦 Installing dependencies...'
-                        sh 'npm install'
-                        sh 'npm install --save-dev eslint'
-                        sh 'npm install @tailwindcss/postcss --save-dev'
-                    }
+                    sh 'npm install'
                 }
             }
         }
@@ -41,7 +51,8 @@ pipeline {
             steps {
                 echo '🚀 Starting Next.js app...'
                 dir('bulletin-board-next') {
-                    sh 'npm run start'
+                    // 启动建议用 pm2 或后台模式防止 pipeline 阻塞
+                    sh 'nohup npm run start &'
                 }
             }
         }
