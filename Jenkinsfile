@@ -17,12 +17,11 @@ pipeline {
         stage('📦 Install Dependencies') {
             steps {
                 dir('bulletin-board-next') {
-                    echo '📦 Installing all dependencies including dev'
+                    echo '📦 Installing dependencies'
                     sh '''
+                        rm -rf node_modules .next
                         npm ci || npm install --include=dev
-                        npm install --save-dev eslint autoprefixer tailwindcss
                         echo "✅ npm dependencies installed"
-                        npm ls autoprefixer || echo "❌ autoprefixer not installed"
                     '''
                 }
             }
