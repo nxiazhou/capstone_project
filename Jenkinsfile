@@ -7,57 +7,57 @@ pipeline {
 
     stages {
 
-        stage('Checkout') {
+        stage('📥 Checkout') {
             steps {
                 echo '📥 Cloning repository...'
                 checkout scm
             }
         }
 
-        stage('Clean Cache') {
+        stage('🧹 Clean Cache') {
             steps {
-                echo '🧹 Removing old cache...'
                 dir('bulletin-board-next') {
+                    echo '🧹 Removing node_modules and .next'
                     sh 'rm -rf node_modules .next'
                 }
             }
         }
 
-        stage('Install Dependencies & Build') {
+        stage('📦 Install Dependencies & Build') {
             steps {
                 dir('bulletin-board-next') {
-                    sh '''
-                        echo "📦 Setting npm registry"
-                        npm config set registry https://registry.npmmirror.com
+                    sh '''#!/bin/bash
+                    echo "📦 Setting npm registry to Taobao mirror"
+                    npm config set registry https://registry.npmmirror.com
 
-                        echo "📦 Installing dependencies"
-                        npm install --include=dev --unsafe-perm
+                    echo "📦 Installing project dependencies"
+                    npm install
 
-                        echo "📦 Installing TailwindCSS and ESLint"
-                        npm install -D eslint tailwindcss postcss autoprefixer
+                    echo "📦 Installing TailwindCSS and ESLint"
+                    npm install -D eslint tailwindcss postcss autoprefixer
 
-                        echo "🔨 Building the Next.js project"
-                        npm run build
+                    echo "🔨 Building Next.js project"
+                    npm run build
                     '''
                 }
             }
         }
 
-        stage('Start with PM2') {
+        stage('🚀 Deploy with PM2') {
             steps {
                 dir('bulletin-board-next') {
-                    sh '''
-                        echo "🚀 Installing PM2 globally if not exists"
-                        npm install -g pm2
+                    sh '''#!/bin/bash
+                    echo "📦 Installing PM2 globally if not installed"
+                    npm install -g pm2
 
-                        echo "🛑 Stopping existing PM2 process if exists"
-                        pm2 delete next-app || true
+                    echo "🛑 Stopping existing PM2 process (if any)"
+                    pm2 delete next-app || true
 
-                        echo "🚀 Starting Next.js with PM2"
-                        pm2 start npm --name "next-app" -- run start
+                    echo "🚀 Starting app with PM2"
+                    pm2 start npm --name "next-app" -- run start
 
-                        echo "💾 Saving PM2 process list"
-                        pm2 save
+                    echo "💾 Saving PM2 process list for reboot"
+                    pm2 save
                     '''
                 }
             }
