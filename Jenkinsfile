@@ -24,7 +24,7 @@ pipeline {
             steps {
                 echo '🧹 Removing old cache...'
                 dir('bulletin-board-next') {
-                    sh 'echo "Dddd2025" | sudo -S rm -rf node_modules .next'
+                    sh 'sudo rm -rf node_modules .next'
                 }
             }
         }
