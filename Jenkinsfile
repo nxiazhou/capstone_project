@@ -9,18 +9,18 @@ pipeline {
     stage('Clone') {
       steps {
         echo '📥 Cloning repository...'
-        git url: 'git@github.com:nxiazhou/capstone_project.git', branch: 'main'
+        git url: 'git@github.com:nxiazhou/capstone_project.git', branch: 'main', credentialsId: 'dddd'
       }
     }
 
     stage('Install Dependencies') {
-    steps {
+      steps {
         echo '📦 Installing dependencies...'
         dir('bulletin-board-next') {
-        sh 'rm -rf node_modules package-lock.json' // ⚠️ 可选但建议清理旧依赖
-        sh 'npm install --include=dev'
+          sh 'rm -rf node_modules package-lock.json'
+          sh 'npm install --include=dev'
         }
-    }
+      }
     }
 
     stage('Build') {
@@ -32,20 +32,15 @@ pipeline {
       }
     }
 
-    stage('Export Static Files (optional)') {
+    stage('Start with PM2') {
       steps {
-        echo '📤 Exporting static files...'
+        echo '🚀 Starting app with PM2...'
         dir('bulletin-board-next') {
-          sh 'npm run export || true'
-        }
-      }
-    }
-
-    stage('Test (optional)') {
-      steps {
-        echo '🧪 Running tests...'
-        dir('bulletin-board-next') {
-          sh 'npm test || echo "No tests configured"'
+          sh '''
+            pm2 delete bulletin-board-next || true
+            pm2 start node_modules/next/dist/bin/next --name "bulletin-board-next" -- start -p 3000 -H 0.0.0.0
+            pm2 save
+          '''
         }
       }
     }
