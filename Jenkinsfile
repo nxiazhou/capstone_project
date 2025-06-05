@@ -27,7 +27,7 @@ pipeline {
             steps {
                 dir('bulletin-board-next') {
                     echo '📦 Installing project dependencies'
-                    sh 'npm install'
+                    sh 'npm install --include=dev'
 
                     echo '📦 Installing TailwindCSS and ESLint'
                     sh 'npm install -D tailwindcss postcss autoprefixer eslint'
