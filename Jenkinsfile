@@ -17,7 +17,8 @@ pipeline {
       steps {
         echo '📦 Installing dependencies...'
         dir('bulletin-board-next') {
-          sh 'npm install'
+          // ⚠️ 必须安装 devDependencies
+          sh 'npm install --include=dev'
         }
       }
     }
