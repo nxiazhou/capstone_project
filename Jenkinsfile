@@ -19,9 +19,10 @@ pipeline {
                 dir('bulletin-board-next') {
                     script {
                         sh 'git pull origin main'
-
                         echo '📦 Installing dependencies...'
                         sh 'npm install'
+                        sh 'npm install --save-dev eslint'
+                        sh 'npm install @tailwindcss/postcss --save-dev'
                     }
                 }
             }
