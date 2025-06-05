@@ -27,7 +27,8 @@ pipeline {
         echo '📦 Installing dependencies...'
         dir('bulletin-board-next') {
           sh 'npm install'  // Install all dependencies
-          sh 'npm install @tailwindcss/postcss'  // Explicitly install @tailwindcss/postcss
+          sh 'npm install @tailwindcss/postcss --save-dev'  // Explicitly install @tailwindcss/postcss
+          sh ' npm install --save-dev eslint'  // Explicitly install eslint
         }
       }
     }
