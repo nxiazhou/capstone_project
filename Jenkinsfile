@@ -3,30 +3,21 @@ pipeline {
 
   environment {
     NODE_ENV = 'production'
-    APP_DIR = 'bulletin-board-next'
   }
 
   stages {
-    stage('Checkout') {
+    stage('Clone') {
       steps {
         echo '📥 Cloning repository...'
-        checkout scm
+        git url: 'git@github.com:nxiazhou/capstone_project.git', branch: 'main'
       }
     }
 
-    stage('Install Dependencies If Needed') {
+    stage('Install Dependencies') {
       steps {
-        echo '📦 Checking for package.json changes...'
-        dir("${APP_DIR}") {
-          script {
-            def packageChanged = sh(script: 'git diff --name-only HEAD~1 HEAD | grep package.json || true', returnStdout: true).trim()
-            if (packageChanged) {
-              echo '🔁 package.json changed, reinstalling dependencies...'
-              sh 'npm install'
-            } else {
-              echo '✅ package.json unchanged, skipping npm install.'
-            }
-          }
+        echo '📦 Installing dependencies...'
+        dir('bulletin-board-next') {
+          sh 'npm install'
         }
       }
     }
@@ -34,7 +25,7 @@ pipeline {
     stage('Build') {
       steps {
         echo '🔨 Building Next.js app...'
-        dir("${APP_DIR}") {
+        dir('bulletin-board-next') {
           sh 'npm run build'
         }
       }
@@ -42,9 +33,38 @@ pipeline {
 
     stage('Start App') {
       steps {
-        echo '🚀 Starting app with npm start...'
-        dir("${APP_DIR}") {
-          sh 'npm run start'
+        echo '🚀 Starting Next.js app in background...'
+        dir('bulletin-board-next') {
+          // 旧服务可选 kill
+          sh 'pkill -f "next start" || true'
+          // 后台启动
+          sh 'nohup npm run start -- -p 3000 -H 0.0.0.0 > output.log 2>&1 &'
+          // 等待端口就绪
+          sh '''
+            for i in {1..20}; do
+              curl -s http://localhost:3000 > /dev/null && break
+              echo "⏳ Waiting for app to be ready... ($i/20)"
+              sleep 1
+            done
+          '''
+        }
+      }
+    }
+
+    stage('Unit Test (Jest)') {
+      steps {
+        echo '🧪 Running unit tests (Jest)...'
+        dir('bulletin-board-next') {
+          sh 'npm run test || exit 1'
+        }
+      }
+    }
+
+    stage('Integration Test (Cypress)') {
+      steps {
+        echo '🧪 Running integration tests (Cypress)...'
+        dir('bulletin-board-next') {
+          sh 'npx cypress run || exit 1'
         }
       }
     }
