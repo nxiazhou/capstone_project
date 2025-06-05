@@ -7,19 +7,6 @@ pipeline {
 
     stages {
 
-        stage('Check Shell') {
-            steps {
-                sh 'echo $0'                // 输出当前 shell
-                sh 'readlink -f $(which sh)' // 显示 /bin/sh 的真实链接
-            }
-        }
-
-        stage('Who Am I') {
-            steps {
-                sh 'whoami'
-            }
-        }
-
         stage('Checkout') {
             steps {
                 echo '📥 Cloning repository...'
@@ -36,34 +23,41 @@ pipeline {
             }
         }
 
-        stage('Install & Build with Bash') {
+        stage('Install Dependencies & Build') {
             steps {
                 dir('bulletin-board-next') {
-                    sh '''#!/bin/bash
-                    echo "📦 Setting npm registry..."
-                    npm config set registry https://registry.npmmirror.com
+                    sh '''
+                        echo "📦 Setting npm registry"
+                        npm config set registry https://registry.npmmirror.com
 
-                    echo "📦 Installing dependencies..."
-                    npm install --include=dev --unsafe-perm
+                        echo "📦 Installing dependencies"
+                        npm install --include=dev --unsafe-perm
 
-                    echo "📦 Installing Tailwind & ESLint..."
-                    npm install -D tailwindcss postcss autoprefixer
-                    npm install -D eslint
+                        echo "📦 Installing TailwindCSS and ESLint"
+                        npm install -D eslint tailwindcss postcss autoprefixer
 
-                    echo "🔨 Building Next.js app..."
-                    npm run build
+                        echo "🔨 Building the Next.js project"
+                        npm run build
                     '''
                 }
             }
         }
 
-        stage('Start App in Background') {
+        stage('Start with PM2') {
             steps {
-                echo '🚀 Starting Next.js app in background...'
                 dir('bulletin-board-next') {
-                    sh '''#!/bin/bash
-                    echo "📤 Launching app with nohup..."
-                    nohup npm run start > app.log 2>&1 &
+                    sh '''
+                        echo "🚀 Installing PM2 globally if not exists"
+                        npm install -g pm2
+
+                        echo "🛑 Stopping existing PM2 process if exists"
+                        pm2 delete next-app || true
+
+                        echo "🚀 Starting Next.js with PM2"
+                        pm2 start npm --name "next-app" -- run start
+
+                        echo "💾 Saving PM2 process list"
+                        pm2 save
                     '''
                 }
             }
