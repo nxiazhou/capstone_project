@@ -10,11 +10,14 @@ pipeline {
             steps {
                 echo '📥 Cloning repository...'
                 script {
-                    // 输出当前目录，检查是否在正确的工作区路径
-                    sh 'pwd'
-                    checkout scm
-                    // 再次输出当前目录，确保 checkout 后没有更改
-                    sh 'pwd'
+                    dir('/var/jenkins_home/workspace/dddd_bullet_dashboard/capstone_project'){
+                        // 输出当前目录，检查是否在正确的工作区路径
+                        sh 'pwd'
+                        checkout scm
+                        // 再次输出当前目录，确保 checkout 后没有更改
+                        sh 'pwd'
+                    }
+
                 }
             }
         }

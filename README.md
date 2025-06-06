@@ -54,6 +54,8 @@ GitHub 仓库地址：👉 https://github.com/nxiazhou/capstone_project
 停止容器:
     sudo docker stop jenkins
     sudo docker rm jenkins
+
+##  创建Job
 本地ssh命令
 
     ssh -i "C:/develop/ssh/Dddd2025.pem" root@47.97.211.83
