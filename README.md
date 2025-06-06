@@ -5,8 +5,18 @@ GitHub 仓库地址：👉 https://github.com/nxiazhou/capstone_project
 旧前端地址：http://52.221.51.195:3000/login
 
 新前端地址:http://47.97.211.83:3000/login
-ttt
 
+前端的运行jenkins命令:
+
+    sudo docker run -d --name jenkins \
+        -p 8080:8080 -p 50000:50000 \
+        -v /var/lib/jenkins:/var/jenkins_home \
+        -e JENKINS_HOME=/var/jenkins_home \
+        my-jenkins:2.504.2
+
+停止容器:
+    sudo docker stop jenkins
+    sudo docker rm jenkins
 本地ssh命令
 
     ssh -i "C:/develop/ssh/Dddd2025.pem" root@47.97.211.83
@@ -22,7 +32,6 @@ linux用户:
 
 jenkins:
 
-    admin f99b635e9a0c419491da7fdeb3546316
     dddd Dddd2025
 
 
