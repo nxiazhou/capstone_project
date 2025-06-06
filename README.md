@@ -12,7 +12,44 @@ GitHub 仓库地址：👉 https://github.com/nxiazhou/capstone_project
         -p 8080:8080 -p 50000:50000 \
         -v /var/lib/jenkins:/var/jenkins_home \
         -e JENKINS_HOME=/var/jenkins_home \
-        my-jenkins:2.504.2
+        my-jenkins-new:2.504.2
+
+##  构建过程
+    在  ~/docker-jenkins目录下创建Dockerfile：
+
+        # 使用 Ubuntu 作为基础镜像
+        FROM ubuntu:20.04
+
+        # 设置时区为亚洲，并禁用交互提示
+        ENV DEBIAN_FRONTEND=noninteractive
+        RUN apt-get update && \
+            apt-get install -y tzdata && \
+            ln -fs /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && \
+            dpkg-reconfigure --frontend noninteractive tzdata
+
+        # 安装 Java 和必要的工具
+        RUN apt-get update && \
+            apt-get install -y openjdk-17-jdk git curl nodejs npm wget && \
+            rm -rf /var/lib/apt/lists/*
+
+        # 安装 PM2（使用 npm 安装）
+        RUN npm install -g pm2
+
+        # 创建目录来存放 Jenkins WAR 文件
+        RUN mkdir -p /opt/jenkins
+
+        # 将本地的 jenkins-2.504.2.war 文件从构建上下文目录复制到容器中的 /opt/jenkins
+        COPY jenkins-2.504.2.war /opt/jenkins/jenkins-2.504.2.war
+
+        # 设置 Jenkins 配置目录
+        ENV JENKINS_HOME=/var/jenkins_home
+
+        # 设置工作目录
+        WORKDIR /var/jenkins_home
+
+进入容器的操作：
+
+    sudo docker exec -it jenkins /bin/bash
 
 停止容器:
     sudo docker stop jenkins
@@ -21,9 +58,13 @@ GitHub 仓库地址：👉 https://github.com/nxiazhou/capstone_project
 
     ssh -i "C:/develop/ssh/Dddd2025.pem" root@47.97.211.83
 
-jenkins工作目录:   
+jenkins工作目录（Docker容器外）:   
 
     /var/lib/jenkins/workspace/dddd_bullet_dashboard
+
+jenkins工作目录（Docker容器内）:
+
+    /var/jenkins_home/workspace/dddd_bullet_dashboard
 
 linux用户:
 

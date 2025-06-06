@@ -6,11 +6,16 @@ pipeline {
     }
 
     stages {
-
         stage('📥 Checkout') {
             steps {
                 echo '📥 Cloning repository...'
-                checkout scm
+                script {
+                    // 输出当前目录，检查是否在正确的工作区路径
+                    sh 'pwd'
+                    checkout scm
+                    // 再次输出当前目录，确保 checkout 后没有更改
+                    sh 'pwd'
+                }
             }
         }
 
@@ -43,6 +48,15 @@ pipeline {
             }
         }
 
+        stage('🔨 Build Project') {
+            steps {
+                dir('bulletin-board-next') {
+                    echo '🔨 Building Next.js app...'
+                    sh 'npm run build || { echo "❌ Build failed"; exit 1; }'
+                }
+            }
+        }
+
         stage('🧪 Run Unit Tests') {
             steps {
                 dir('bulletin-board-next') {
@@ -65,14 +79,7 @@ pipeline {
             }
         }
 
-        stage('🔨 Build Project') {
-            steps {
-                dir('bulletin-board-next') {
-                    echo '🔨 Building Next.js app...'
-                    sh 'npm run build || { echo "❌ Build failed"; exit 1; }'
-                }
-            }
-        }
+
 
         stage('🚀 Run with PM2') {
             steps {
