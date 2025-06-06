@@ -8,9 +8,9 @@ pipeline {
     }
 
     stages {
-        stage('📥 Checkout') {
+        stage('Checkout') {
             steps {
-                echo '📥 Cloning repository...'
+                echo 'Cloning repository...'
                 checkout scm
             }
         }
@@ -21,7 +21,7 @@ pipeline {
                     dir('bulletin-board-next') {
                         def changes = sh(script: "git diff --name-only HEAD HEAD~1", returnStdout: true).trim()
                         if (changes.contains("package.json")) {
-                            echo "📦 package.json has changed. Clearing cache..."
+                            echo "package.json has changed. Clearing cache..."
                             sh '''
                                 # 删除旧的依赖项和构建缓存
                                 rm -rf node_modules package-lock.json .next
@@ -34,54 +34,54 @@ pipeline {
             }
         }
 
-        stage('📦 Install Dependencies') {
+        stage('Install Dependencies') {
             steps {
                 dir('bulletin-board-next') {
-                    echo '📦 Installing all dependencies'
+                    echo 'Installing all dependencies'
                     sh '''
                         npm ci --prefer-offline --no-audit --progress=false
-                        echo "✅ npm dependencies installed"
+                        echo "V npm dependencies installed"
                     '''
                 }
             }
         }
 
-        stage('🔨 Build Project') {
+        stage('Build Project') {
             steps {
                 dir('bulletin-board-next') {
-                    echo '🔨 Building Next.js app...'
-                    sh 'npm run build || { echo "❌ Build failed"; exit 1; }'
+                    echo 'Building Next.js app...'
+                    sh 'npm run build || { echo "X Build failed"; exit 1; }'
                 }
             }
         }
 
-        stage('🧪 Run Unit Tests') {
+        stage('Run Unit Tests') {
             steps {
                 dir('bulletin-board-next') {
-                    echo '🧪 Running unit tests...'
-                    sh 'npm run test || { echo "❌ Unit tests failed"; exit 1; }'
+                    echo 'Running unit tests...'
+                    sh 'npm run test || { echo "X Unit tests failed"; exit 1; }'
                 }
             }
         }
 
-        stage('🧪 Run Integration Tests') {
+        stage('Run Integration Tests') {
             steps {
                 dir('bulletin-board-next') {
-                    echo '🧪 Running integration tests...'
+                    echo 'Running integration tests...'
                     sh '''
                         export DISPLAY=:99
                         nohup Xvfb :99 -screen 0 1920x1080x24 > /dev/null 2>&1 &
                         sleep 2
-                        NO_COLOR=1 npx cypress run || { echo "❌ Integration tests failed"; exit 1; }
+                        NO_COLOR=1 npx cypress run || { echo "X Integration tests failed"; exit 1; }
                     '''
                 }
             }
         }
 
-        stage('🚀 Run with PM2') {
+        stage('Run with PM2') {
             steps {
                 dir('bulletin-board-next') {
-                    echo '🚀 Restarting with PM2...'
+                    echo 'Restarting with PM2...'
                     sh '''
                         # 删除旧的 PM2 进程，防止冲突
                         pm2 delete next-app || true
@@ -102,7 +102,7 @@ pipeline {
             steps {
                 script {
                     def publicIp = sh(script: "curl -s http://169.254.169.254/latest/meta-data/public-ipv4", returnStdout: true).trim()
-                    echo "✅ Jenkins deployment completed! Access the app at http://${publicIp}:3000"
+                    echo "V Jenkins deployment completed! Access the app at http://${publicIp}:3000"
                 }
             }
         }
