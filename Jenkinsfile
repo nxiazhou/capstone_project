@@ -3,6 +3,8 @@ pipeline {
 
     environment {
         NODE_ENV = 'production'
+        LANG = 'en_US.UTF-8'
+        LC_ALL = 'en_US.UTF-8'
     }
 
     stages {
@@ -11,11 +13,8 @@ pipeline {
                 echo '📥 Cloning repository...'
                 script {
                     dir('/var/jenkins_home/workspace/dddd_bullet_dashboard/capstone_project'){
-                        // 输出当前目录，检查是否在正确的工作区路径
                         sh 'pwd'
                         checkout scm
-                        // 再次输出当前目录，确保 checkout 后没有更改
-                        sh 'pwd'
                     }
 
                 }
