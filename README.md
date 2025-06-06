@@ -6,6 +6,7 @@ GitHub 仓库地址：👉 https://github.com/nxiazhou/capstone_project
 
 新前端地址:http://47.97.211.83:3000/login
 
+
 前端的运行jenkins命令:
 
     sudo docker run -d --name jenkins \
@@ -29,6 +30,14 @@ jenkins工作目录（Docker容器外）:
 jenkins工作目录（Docker容器内）:
 
     /var/jenkins_home/workspace/dddd_bullet_dashboard
+
+进入容器的操作：
+
+    sudo docker exec -it jenkins /bin/bash
+
+停止容器:
+    sudo docker stop jenkins
+    sudo docker rm jenkins
 ##  构建过程
     在  ~/docker-jenkins目录下创建Dockerfile：
 
@@ -62,13 +71,7 @@ jenkins工作目录（Docker容器内）:
         # 设置工作目录
         WORKDIR /var/jenkins_home
 
-进入容器的操作：
 
-    sudo docker exec -it jenkins /bin/bash
-
-停止容器:
-    sudo docker stop jenkins
-    sudo docker rm jenkins
 
 ##  创建Job
 
