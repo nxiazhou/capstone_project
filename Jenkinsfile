@@ -18,7 +18,7 @@ pipeline {
         stage('🔍 Check if package.json changed') {
             steps {
                 script {
-                    dir('bulletin-board-next'){
+                    dir('bulletin-board-next') {
                         def changes = sh(script: "git diff --name-only HEAD HEAD~1", returnStdout: true).trim()
                         if (changes.contains("package.json")) {
                             echo "📦 package.json has changed. Clearing cache..."
@@ -39,7 +39,7 @@ pipeline {
                 dir('bulletin-board-next') {
                     echo '📦 Installing all dependencies'
                     sh '''
-                        npm install
+                        npm ci --prefer-offline --no-audit --progress=false
                         echo "✅ npm dependencies installed"
                     '''
                 }
@@ -70,14 +70,13 @@ pipeline {
                     echo '🧪 Running integration tests...'
                     sh '''
                         export DISPLAY=:99
-                        NO_COLOR=1 Xvfb :99 -screen 0 1920x1080x24 > /dev/null 2>&1 &
+                        nohup Xvfb :99 -screen 0 1920x1080x24 > /dev/null 2>&1 &
+                        sleep 2
                         NO_COLOR=1 npx cypress run || { echo "❌ Integration tests failed"; exit 1; }
                     '''
                 }
             }
         }
-
-
 
         stage('🚀 Run with PM2') {
             steps {
@@ -86,9 +85,14 @@ pipeline {
                     sh '''
                         # 删除旧的 PM2 进程，防止冲突
                         pm2 delete next-app || true
+
                         # 使用 PM2 启动应用
                         pm2 start npm --name "next-app" -- run start
                         pm2 save
+
+                        # 打印 PM2 状态确认
+                        pm2 list
+                        pm2 info next-app
                     '''
                 }
             }
