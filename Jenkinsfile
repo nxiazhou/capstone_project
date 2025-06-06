@@ -13,7 +13,6 @@ pipeline {
                 echo '📥 Cloning repository...'
                 script {
                     dir('/var/jenkins_home/workspace/dddd_bullet_dashboard/capstone_project'){
-                        sh 'pwd'
                         checkout scm
                     }
 
@@ -24,15 +23,17 @@ pipeline {
         stage('🔍 Check if package.json changed') {
             steps {
                 script {
-                    def changes = sh(script: "git diff --name-only HEAD HEAD~1", returnStdout: true).trim()
-                    if (changes.contains("package.json")) {
-                        echo "📦 package.json has changed. Clearing cache..."
-                        sh '''
-                            # 删除旧的依赖项和构建缓存
-                            rm -rf node_modules package-lock.json .next
-                        '''
-                    } else {
-                        echo "🔑 No changes in package.json. Skipping cache clear."
+                    dir('bulletin-board-next'){
+                        def changes = sh(script: "git diff --name-only HEAD HEAD~1", returnStdout: true).trim()
+                        if (changes.contains("package.json")) {
+                            echo "📦 package.json has changed. Clearing cache..."
+                            sh '''
+                                # 删除旧的依赖项和构建缓存
+                                rm -rf node_modules package-lock.json .next
+                            '''
+                        } else {
+                            echo "🔑 No changes in package.json. Skipping cache clear."
+                        }
                     }
                 }
             }

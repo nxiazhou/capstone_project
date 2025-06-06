@@ -14,6 +14,21 @@ GitHub 仓库地址：👉 https://github.com/nxiazhou/capstone_project
         -e JENKINS_HOME=/var/jenkins_home \
         my-jenkins-new:2.504.2
 
+本地ssh命令
+
+    ssh -i "C:/develop/ssh/Dddd2025.pem" root@47.97.211.83
+
+windows本地上传linux命令
+
+    scp -i "C:/develop/ssh/Dddd2025.pem" C:/develop/ssh/jenkins-plugins-2.504.2.zip root@47.97.211.83:/var/lib/jenkins/jenkins-plugins-2.504.2.zip
+
+jenkins工作目录（Docker容器外）:   
+
+    /var/lib/jenkins/workspace/dddd_bullet_dashboard
+
+jenkins工作目录（Docker容器内）:
+
+    /var/jenkins_home/workspace/dddd_bullet_dashboard
 ##  构建过程
     在  ~/docker-jenkins目录下创建Dockerfile：
 
@@ -56,17 +71,9 @@ GitHub 仓库地址：👉 https://github.com/nxiazhou/capstone_project
     sudo docker rm jenkins
 
 ##  创建Job
-本地ssh命令
 
-    ssh -i "C:/develop/ssh/Dddd2025.pem" root@47.97.211.83
 
-jenkins工作目录（Docker容器外）:   
 
-    /var/lib/jenkins/workspace/dddd_bullet_dashboard
-
-jenkins工作目录（Docker容器内）:
-
-    /var/jenkins_home/workspace/dddd_bullet_dashboard
 
 linux用户:
 
