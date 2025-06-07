@@ -89,6 +89,26 @@ pipeline {
             }
         }
 
+        stage('Run Next.js App in Kubernetes') {
+            steps {
+                echo '🚀 Starting Next.js app in Kubernetes...'
+                script {
+                    try {
+                        dir('bulletin-board-next') {
+                            sh '''
+                                # Start Next.js app directly in the background
+                                nohup node node_modules/.bin/next start -p 3000 & 
+                            '''
+                            echo '✅ Next.js app started successfully'
+                        }
+                    } catch (Exception e) {
+                        echo '❌ Error starting Next.js app: ${e.getMessage()}'
+                        throw e
+                    }
+                }
+            }
+        }
+
         stage('Run Unit Tests') {
             steps {
                 echo '\uD83E\uDDD2 Running unit tests...'
@@ -116,7 +136,7 @@ pipeline {
                                 export DISPLAY=:99
                                 nohup Xvfb :99 -screen 0 1920x1080x24 > /dev/null 2>&1 &
                                 sleep 2
-                                NO_COLOR=1 npx cypress run || { echo "\\u274C Integration tests failed"; exit 1; }
+                                npx cypress run || { echo "\\u274C Integration tests failed"; exit 1; }
                             '''
                             echo '\u2705 Integration tests passed'
                         }
@@ -128,33 +148,6 @@ pipeline {
             }
         }
 
-        stage('Run with PM2') {
-            steps {
-                echo '\uD83D\uDE80 Restarting with PM2...'
-                script {
-                    try {
-                        dir('bulletin-board-next') {
-                            sh '''
-                                # Delete old PM2 process to avoid conflict
-                                pm2 delete next-app || true
-
-                                # Start app with PM2
-                                pm2 start npm --name "next-app" -- run start
-                                pm2 save
-
-                                # Print PM2 status for confirmation
-                                pm2 list
-                                pm2 info next-app
-                            '''
-                            echo '\u2705 PM2 process started successfully'
-                        }
-                    } catch (Exception e) {
-                        echo '\u274C Error during PM2 process start: ${e.getMessage()}'
-                        throw e
-                    }
-                }
-            }
-        }
 
         stage('Get ECS Public IP') {
             steps {
