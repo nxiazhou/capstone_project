@@ -60,8 +60,7 @@ pipeline {
                     try {
                         dir('bulletin-board-next') {
                             sh '''
-                                npm ci --prefer-offline --no-audit --progress=false
-                                npm install jest --save-dev
+                                npm ci --prefer-offline --no-audit --progress=false --save-dev
                                 echo "\\u2705 Npm dependencies installed"
                             '''
                             // Cache node_modules immediately after installation
