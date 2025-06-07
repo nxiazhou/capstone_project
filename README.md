@@ -18,7 +18,7 @@ GitHub 仓库地址：👉 https://github.com/nxiazhou/capstone_project
 
 本地ssh命令:
 
-    ssh -i "C:/Users/niuxiazhou/.ssh/new_key" root@47.97.211.83
+    ssh -i "C:/develop/ssh/new_key" root@47.97.211.83
 
 windows本地上传linux命令
 
