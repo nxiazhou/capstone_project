@@ -64,6 +64,7 @@ pipeline {
                         dir('bulletin-board-next') {
                             // Install dependencies directly without caching node_modules
                             sh '''
+                                printenv
                                 npm install --save-dev
                                 echo "\\u2705 Npm dependencies installed"
                                 whoami
