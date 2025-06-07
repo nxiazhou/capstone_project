@@ -138,6 +138,7 @@ pipeline {
                     catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
                         try {
                             dir('bulletin-board-next') {
+                                sh 'npm install jest --save-dev'
                                 sh 'npm run test || { echo "\\u274C Unit tests failed"; exit 1; }'
                                 echo '\u2705 Unit tests passed'
                             }
