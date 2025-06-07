@@ -11,6 +11,8 @@ pipeline {
         NODE_ENV = 'production'
         LANG = 'en_US.UTF-8'
         LC_ALL = 'en_US.UTF-8'
+        NODE_ENV = 'development'
+        CI = 'false'
     }
 
     stages {
