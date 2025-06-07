@@ -60,7 +60,7 @@ pipeline {
                     try {
                         dir('bulletin-board-next') {
                             sh '''
-                                npm ci --prefer-offline --no-audit --progress=false --save-dev
+                                npm install --prefer-offline --no-audit --progress=false --save-dev
                                 echo "\\u2705 Npm dependencies installed"
                                 whoami
                                 pwd
