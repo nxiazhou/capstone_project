@@ -10,11 +10,13 @@ GitHub 仓库地址：👉 https://github.com/nxiazhou/capstone_project
 前端的运行jenkins命令如下:
 
     sudo docker run -d --name jenkins \
-        -p 8080:8080 -p 50000:50000  -p 3000:3000 \
+        -p 8080:8080 -p 50000:50000 -p 3000:3000 \
         -v /var/lib/jenkins:/var/jenkins_home \
         -e JENKINS_HOME=/var/jenkins_home \
+        -e LANG=en_US.UTF-8 \
+        -e LC_ALL=en_US.UTF-8 \
         -e GIT_SSH_COMMAND="ssh -F /var/jenkins_home/.ssh/config" \
-        my-jenkins-new:latest
+        my-jenkins:latest
 
 本地ssh命令:
 
