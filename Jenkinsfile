@@ -64,6 +64,9 @@ pipeline {
                                 npm install jest --save-dev
                                 echo "\\u2705 Npm dependencies installed"
                             '''
+                            // Cache node_modules immediately after installation
+                            stash(name: 'node_modules', includes: 'bulletin-board-next/node_modules/**/*')
+                            echo '✅ Cached node_modules directory'
                         }
                     } catch (Exception e) {
                         echo '\u274C Error during dependencies installation: ${e.getMessage()}'
@@ -73,15 +76,6 @@ pipeline {
             }
         }
 
-        // Stash node_modules after installing dependencies
-        stage('Cache node_modules') {
-            steps {
-                script {
-                    stash(name: 'node_modules', includes: 'bulletin-board-next/node_modules/**/*')
-                    echo '✅ Cached node_modules directory'
-                }
-            }
-        }
 
         stage('Build Project') {
             steps {
@@ -92,21 +86,14 @@ pipeline {
                             unstash 'node_modules'  // Unstash node_modules before building
                             sh 'npm run build || { echo "\\u274C Build failed"; exit 1; }'
                             echo '\u2705 Build completed successfully'
+
+                            stash(name: '.next', includes: 'bulletin-board-next/.next/**/*')
+                            echo '✅ Cached .next directory'
                         }
                     } catch (Exception e) {
                         echo '\u274C Error during build: ${e.getMessage()}'
                         throw e
                     }
-                }
-            }
-        }
-
-        // Stash .next directory after build
-        stage('Cache .next') {
-            steps {
-                script {
-                    stash(name: '.next', includes: 'bulletin-board-next/.next/**/*')
-                    echo '✅ Cached .next directory'
                 }
             }
         }
