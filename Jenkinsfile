@@ -109,18 +109,20 @@ pipeline {
             }
         }
 
-        stage('Run Unit Tests') {
+          stage('Run Unit Tests') {
             steps {
-                echo '\uD83E\uDDD2 Running unit tests...'
+                echo '\uD83E\uDDD2 运行单元测试...'
                 script {
-                    try {
-                        dir('bulletin-board-next') {
-                            sh 'npm run test || { echo "\\u274C Unit tests failed"; exit 1; }'
-                            echo '\u2705 Unit tests passed'
+                    catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                        try {
+                            dir('bulletin-board-next') {
+                                sh 'npm run test || { echo "\\u274C 单元测试失败"; exit 1; }'
+                                echo '\u2705 单元测试通过'
+                            }
+                        } catch (Exception e) {
+                            echo '\u274C 运行单元测试时出错: ${e.getMessage()}'
+                            throw e
                         }
-                    } catch (Exception e) {
-                        echo '\u274C Error running unit tests: ${e.getMessage()}'
-                        throw e
                     }
                 }
             }
@@ -128,27 +130,28 @@ pipeline {
 
         stage('Run Integration Tests') {
             steps {
-                echo '\uD83D\uDD04 Running integration tests...'
+                echo '\uD83D\uDD04 运行集成测试...'
                 script {
-                    try {
-                        dir('bulletin-board-next') {
-                            sh '''
-                                export DISPLAY=:99
-                                nohup Xvfb :99 -screen 0 1920x1080x24 > /dev/null 2>&1 &
-                                sleep 2
-                                npx cypress run || { echo "\\u274C Integration tests failed"; exit 1; }
-                            '''
-                            echo '\u2705 Integration tests passed'
+                    catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                        try {
+                            dir('bulletin-board-next') {
+                                sh '''
+                                    export DISPLAY=:99
+                                    nohup Xvfb :99 -screen 0 1920x1080x24 > /dev/null 2>&1 &
+                                    sleep 2
+                                    npx cypress run || { echo "\\u274C 集成测试失败"; exit 1; }
+                                '''
+                                echo '\u2705 集成测试通过'
+                            }
+                        } catch (Exception e) {
+                            echo '\u274C 运行集成测试时出错: ${e.getMessage()}'
+                            throw e
                         }
-                    } catch (Exception e) {
-                        echo '\u274C Error running integration tests: ${e.getMessage()}'
-                        throw e
                     }
                 }
             }
         }
-
-
+        
         stage('Get ECS Public IP') {
             steps {
                 echo '\uD83C\uDF10 Getting ECS public IP...'
