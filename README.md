@@ -16,7 +16,7 @@ GitHub 仓库地址：👉 https://github.com/nxiazhou/capstone_project
         -e GIT_SSH_COMMAND="ssh -F /var/jenkins_home/.ssh/config" \
         my-jenkins-new:latest
 
-本地ssh命令
+本地ssh命令:
 
     ssh -i "C:/Users/niuxiazhou/.ssh/new_key" root@47.97.211.83
 
