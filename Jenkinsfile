@@ -60,6 +60,7 @@ pipeline {
                     try {
                         dir('bulletin-board-next') {
                             sh '''
+                                rm -rf node_modules package-lock.json .next
                                 npm install --prefer-offline --no-audit --progress=false --save-dev
                                 echo "\\u2705 Npm dependencies installed"
                                 whoami
