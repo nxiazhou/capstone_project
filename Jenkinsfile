@@ -11,6 +11,9 @@ pipeline {
         NODE_ENV = 'production'
         LANG = 'en_US.UTF-8'
         LC_ALL = 'en_US.UTF-8'
+        PATH = '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin'
+        HOME = '/root'
+        USER = 'root'
     }
 
     stages {
