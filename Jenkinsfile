@@ -72,14 +72,23 @@ pipeline {
             }
         }
 
+        // Stash node_modules after installing dependencies
+        stage('Cache node_modules') {
+            steps {
+                script {
+                    stash(name: 'node_modules', includes: 'bulletin-board-next/node_modules/**/*')
+                    echo '✅ Cached node_modules directory'
+                }
+            }
+        }
+
         stage('Build Project') {
             steps {
                 echo '\uD83D\uDD28 Building Next.js app...'
                 script {
                     try {
                         dir('bulletin-board-next') {
-                            unstash 'node_modules'
-                            unstash '.next'
+                            unstash 'node_modules'  // Unstash node_modules before building
                             sh 'npm run build || { echo "\\u274C Build failed"; exit 1; }'
                             echo '\u2705 Build completed successfully'
                         }
@@ -91,14 +100,12 @@ pipeline {
             }
         }
 
-
-        // Cache node_modules and .next directories
-        stage('Cache node_modules and .next') {
+        // Stash .next directory after build
+        stage('Cache .next') {
             steps {
                 script {
-                    stash(name: 'node_modules', includes: 'bulletin-board-next/node_modules/**/*')
                     stash(name: '.next', includes: 'bulletin-board-next/.next/**/*')
-                    echo '✅ Cached node_modules and .next directories'
+                    echo '✅ Cached .next directory'
                 }
             }
         }
@@ -109,6 +116,7 @@ pipeline {
                 script {
                     try {
                         dir('bulletin-board-next') {
+                            unstash '.next'  // Unstash .next directory before running the app
                             sh '''
                                 # Start Next.js app directly in the background
                                 nohup node node_modules/.bin/next start -p 3000 & 
