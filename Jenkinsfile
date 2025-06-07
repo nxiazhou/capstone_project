@@ -62,6 +62,8 @@ pipeline {
                             sh '''
                                 npm ci --prefer-offline --no-audit --progress=false --save-dev
                                 echo "\\u2705 Npm dependencies installed"
+                                pwd
+                                ls ./node_modules/.bin
                             '''
                             // Cache node_modules immediately after installation
                             stash(name: 'node_modules', includes: 'bulletin-board-next/node_modules/**/*')
