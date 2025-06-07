@@ -61,6 +61,7 @@ pipeline {
                         dir('bulletin-board-next') {
                             sh '''
                                 rm -rf node_modules package-lock.json .next
+                                npm cache clean --force
                                 npm install --save-dev
                                 echo "\\u2705 Npm dependencies installed"
                                 whoami
