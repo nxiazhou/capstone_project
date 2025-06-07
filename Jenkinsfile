@@ -72,17 +72,6 @@ pipeline {
             }
         }
 
-        // Cache node_modules and .next directories
-        stage('Cache node_modules and .next') {
-            steps {
-                script {
-                    stash(name: 'node_modules', includes: 'bulletin-board-next/node_modules/**/*')
-                    stash(name: '.next', includes: 'bulletin-board-next/.next/**/*')
-                    echo '✅ Cached node_modules and .next directories'
-                }
-            }
-        }
-
         stage('Build Project') {
             steps {
                 echo '\uD83D\uDD28 Building Next.js app...'
@@ -98,6 +87,18 @@ pipeline {
                         echo '\u274C Error during build: ${e.getMessage()}'
                         throw e
                     }
+                }
+            }
+        }
+
+
+        // Cache node_modules and .next directories
+        stage('Cache node_modules and .next') {
+            steps {
+                script {
+                    stash(name: 'node_modules', includes: 'bulletin-board-next/node_modules/**/*')
+                    stash(name: '.next', includes: 'bulletin-board-next/.next/**/*')
+                    echo '✅ Cached node_modules and .next directories'
                 }
             }
         }
