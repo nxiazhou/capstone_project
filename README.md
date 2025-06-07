@@ -7,7 +7,7 @@ GitHub 仓库地址：👉 https://github.com/nxiazhou/capstone_project
 新前端地址:http://47.97.211.83:3000/login
 
 
-前端的运行jenkins命令如下:
+前端的运行jenkins命令:
 
     sudo docker run -d --name jenkins \
         -p 8080:8080 -p 50000:50000  -p 3000:3000 \
