@@ -59,18 +59,14 @@ pipeline {
                 script {
                     try {
                         dir('bulletin-board-next') {
+                            // Install dependencies directly without caching node_modules
                             sh '''
-                                rm -rf node_modules package-lock.json .next
-                                npm cache clean --force
-                                npm install --save-dev
+                                npm install --save-dev --verbose
                                 echo "\\u2705 Npm dependencies installed"
                                 whoami
                                 pwd
                                 ls ./node_modules/.bin
                             '''
-                            // Cache node_modules immediately after installation
-                            stash(name: 'node_modules', includes: 'bulletin-board-next/node_modules/**/*')
-                            echo '✅ Cached node_modules directory'
                         }
                     } catch (Exception e) {
                         echo '\u274C Error during dependencies installation: ${e.getMessage()}'
@@ -80,19 +76,15 @@ pipeline {
             }
         }
 
-
         stage('Build Project') {
             steps {
                 echo '\uD83D\uDD28 Building Next.js app...'
                 script {
                     try {
                         dir('bulletin-board-next') {
-                            unstash 'node_modules'  // Unstash node_modules before building
+                            // Build project after dependencies are installed
                             sh 'npm run build || { echo "\\u274C Build failed"; exit 1; }'
                             echo '\u2705 Build completed successfully'
-
-                            stash(name: '.next', includes: 'bulletin-board-next/.next/**/*')
-                            echo '✅ Cached .next directory'
                         }
                     } catch (Exception e) {
                         echo '\u274C Error during build: ${e.getMessage()}'
@@ -108,7 +100,6 @@ pipeline {
                 script {
                     try {
                         dir('bulletin-board-next') {
-                            unstash '.next'  // Unstash .next directory before running the app
                             sh '''
                                 # Start Next.js app directly in the background
                                 nohup node node_modules/.bin/next start -p 3000 & 
