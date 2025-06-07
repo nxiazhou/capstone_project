@@ -72,12 +72,25 @@ pipeline {
             }
         }
 
+        // Cache node_modules and .next directories
+        stage('Cache node_modules and .next') {
+            steps {
+                script {
+                    stash(name: 'node_modules', includes: 'bulletin-board-next/node_modules/**/*')
+                    stash(name: '.next', includes: 'bulletin-board-next/.next/**/*')
+                    echo '✅ Cached node_modules and .next directories'
+                }
+            }
+        }
+
         stage('Build Project') {
             steps {
                 echo '\uD83D\uDD28 Building Next.js app...'
                 script {
                     try {
                         dir('bulletin-board-next') {
+                            unstash 'node_modules'
+                            unstash '.next'
                             sh 'npm run build || { echo "\\u274C Build failed"; exit 1; }'
                             echo '\u2705 Build completed successfully'
                         }
@@ -109,18 +122,18 @@ pipeline {
             }
         }
 
-          stage('Run Unit Tests') {
+        stage('Run Unit Tests') {
             steps {
-                echo '\uD83E\uDDD2 运行单元测试...'
+                echo '\uD83E\uDDD2 Running unit tests...'
                 script {
                     catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
                         try {
                             dir('bulletin-board-next') {
-                                sh 'npm run test || { echo "\\u274C 单元测试失败"; exit 1; }'
-                                echo '\u2705 单元测试通过'
+                                sh 'npm run test || { echo "\\u274C Unit tests failed"; exit 1; }'
+                                echo '\u2705 Unit tests passed'
                             }
                         } catch (Exception e) {
-                            echo '\u274C 运行单元测试时出错: ${e.getMessage()}'
+                            echo '\u274C Error running unit tests: ${e.getMessage()}'
                             throw e
                         }
                     }
@@ -130,7 +143,7 @@ pipeline {
 
         stage('Run Integration Tests') {
             steps {
-                echo '\uD83D\uDD04 运行集成测试...'
+                echo '\uD83D\uDD04 Running integration tests...'
                 script {
                     catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
                         try {
@@ -139,12 +152,12 @@ pipeline {
                                     export DISPLAY=:99
                                     nohup Xvfb :99 -screen 0 1920x1080x24 > /dev/null 2>&1 &
                                     sleep 2
-                                    npx cypress run || { echo "\\u274C 集成测试失败"; exit 1; }
+                                    npx cypress run || { echo "\\u274C Integration tests failed"; exit 1; }
                                 '''
-                                echo '\u2705 集成测试通过'
+                                echo '\u2705 Integration tests passed'
                             }
                         } catch (Exception e) {
-                            echo '\u274C 运行集成测试时出错: ${e.getMessage()}'
+                            echo '\u274C Error running integration tests: ${e.getMessage()}'
                             throw e
                         }
                     }
@@ -156,13 +169,14 @@ pipeline {
             steps {
                 echo '\uD83C\uDF10 Getting ECS public IP...'
                 script {
-                    try {
-                        def publicIp = sh(script: "curl -s http://169.254.169.254/latest/meta-data/public-ipv4", returnStdout: true).trim()
-                        echo "\u2705 Jenkins deployment completed! Access the app at http://${publicIp}:3000"
-                    } catch (Exception e) {
-                        echo '\u274C Error fetching ECS public IP: ${e.getMessage()}'
-                        throw e
-                    }
+                    // Use curl to get the public IP address
+                    def publicIp = sh(script: "curl -s ifconfig.me", returnStdout: true).trim()
+                    
+                    // Append the port ":3000"
+                    def url = publicIp + ":3000"
+                    
+                    // Output the result
+                    echo "The URL with port is: ${url}"
                 }
             }
         }
