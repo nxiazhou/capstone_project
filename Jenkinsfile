@@ -16,13 +16,13 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                echo '📥 Cloning repository...'
+                echo '\uD83D\uDCC5 Cloning repository...'
                 script {
                     try {
                         checkout scm
-                        echo '✅ Repository cloned successfully'
+                        echo '\u2705 Repository cloned successfully'
                     } catch (Exception e) {
-                        echo "❌ Error during checkout: ${e.getMessage()}"
+                        echo '\u274C Error during checkout: ${e.getMessage()}'
                         throw e
                     }
                 }
@@ -36,17 +36,17 @@ pipeline {
                         dir('bulletin-board-next') {
                             def changes = sh(script: "git diff --name-only HEAD HEAD~1", returnStdout: true).trim()
                             if (changes.contains("package.json")) {
-                                echo "🔍 package.json has changed. Clearing cache..."
+                                echo '\uD83D\uDD0D package.json has changed. Clearing cache...'
                                 sh '''
                                     # Remove old dependencies and build cache
                                     rm -rf node_modules package-lock.json .next
                                 '''
                             } else {
-                                echo "🔑 No changes in package.json. Skipping cache clear."
+                                echo '\uD83D\uDD11 No changes in package.json. Skipping cache clear.'
                             }
                         }
                     } catch (Exception e) {
-                        echo "❌ Error checking package.json changes: ${e.getMessage()}"
+                        echo '\u274C Error checking package.json changes: ${e.getMessage()}'
                         throw e
                     }
                 }
@@ -55,17 +55,17 @@ pipeline {
 
         stage('Install Dependencies') {
             steps {
-                echo '📦 Installing all dependencies...'
+                echo '\uD83D\uDCE6 Installing all dependencies...'
                 script {
                     try {
                         dir('bulletin-board-next') {
                             sh '''
                                 npm ci --prefer-offline --no-audit --progress=false
-                                echo "✅ Npm dependencies installed"
+                                echo "\\u2705 Npm dependencies installed"
                             '''
                         }
                     } catch (Exception e) {
-                        echo "❌ Error during dependencies installation: ${e.getMessage()}"
+                        echo '\u274C Error during dependencies installation: ${e.getMessage()}'
                         throw e
                     }
                 }
@@ -74,15 +74,15 @@ pipeline {
 
         stage('Build Project') {
             steps {
-                echo '🔨 Building Next.js app...'
+                echo '\uD83D\uDD28 Building Next.js app...'
                 script {
                     try {
                         dir('bulletin-board-next') {
-                            sh 'npm run build || { echo "❌ Build failed"; exit 1; }'
-                            echo "✅ Build completed successfully"
+                            sh 'npm run build || { echo "\\u274C Build failed"; exit 1; }'
+                            echo '\u2705 Build completed successfully'
                         }
                     } catch (Exception e) {
-                        echo "❌ Error during build: ${e.getMessage()}"
+                        echo '\u274C Error during build: ${e.getMessage()}'
                         throw e
                     }
                 }
@@ -91,15 +91,15 @@ pipeline {
 
         stage('Run Unit Tests') {
             steps {
-                echo '🧪 Running unit tests...'
+                echo '\uD83E\uDDD2 Running unit tests...'
                 script {
                     try {
                         dir('bulletin-board-next') {
-                            sh 'npm run test || { echo "❌ Unit tests failed"; exit 1; }'
-                            echo "✅ Unit tests passed"
+                            sh 'npm run test || { echo "\\u274C Unit tests failed"; exit 1; }'
+                            echo '\u2705 Unit tests passed'
                         }
                     } catch (Exception e) {
-                        echo "❌ Error running unit tests: ${e.getMessage()}"
+                        echo '\u274C Error running unit tests: ${e.getMessage()}'
                         throw e
                     }
                 }
@@ -108,7 +108,7 @@ pipeline {
 
         stage('Run Integration Tests') {
             steps {
-                echo '🔄 Running integration tests...'
+                echo '\uD83D\uDD04 Running integration tests...'
                 script {
                     try {
                         dir('bulletin-board-next') {
@@ -116,12 +116,12 @@ pipeline {
                                 export DISPLAY=:99
                                 nohup Xvfb :99 -screen 0 1920x1080x24 > /dev/null 2>&1 &
                                 sleep 2
-                                NO_COLOR=1 npx cypress run || { echo "❌ Integration tests failed"; exit 1; }
+                                NO_COLOR=1 npx cypress run || { echo "\\u274C Integration tests failed"; exit 1; }
                             '''
-                            echo "✅ Integration tests passed"
+                            echo '\u2705 Integration tests passed'
                         }
                     } catch (Exception e) {
-                        echo "❌ Error running integration tests: ${e.getMessage()}"
+                        echo '\u274C Error running integration tests: ${e.getMessage()}'
                         throw e
                     }
                 }
@@ -130,7 +130,7 @@ pipeline {
 
         stage('Run with PM2') {
             steps {
-                echo '🚀 Restarting with PM2...'
+                echo '\uD83D\uDE80 Restarting with PM2...'
                 script {
                     try {
                         dir('bulletin-board-next') {
@@ -146,10 +146,10 @@ pipeline {
                                 pm2 list
                                 pm2 info next-app
                             '''
-                            echo "✅ PM2 process started successfully"
+                            echo '\u2705 PM2 process started successfully'
                         }
                     } catch (Exception e) {
-                        echo "❌ Error during PM2 process start: ${e.getMessage()}"
+                        echo '\u274C Error during PM2 process start: ${e.getMessage()}'
                         throw e
                     }
                 }
@@ -158,13 +158,13 @@ pipeline {
 
         stage('Get ECS Public IP') {
             steps {
-                echo '🌐 Getting ECS public IP...'
+                echo '\uD83C\uDF10 Getting ECS public IP...'
                 script {
                     try {
                         def publicIp = sh(script: "curl -s http://169.254.169.254/latest/meta-data/public-ipv4", returnStdout: true).trim()
-                        echo "✅ Jenkins deployment completed! Access the app at http://${publicIp}:3000"
+                        echo "\u2705 Jenkins deployment completed! Access the app at http://${publicIp}:3000"
                     } catch (Exception e) {
-                        echo "❌ Error fetching ECS public IP: ${e.getMessage()}"
+                        echo '\u274C Error fetching ECS public IP: ${e.getMessage()}'
                         throw e
                     }
                 }
