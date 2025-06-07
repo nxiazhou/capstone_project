@@ -10,7 +10,7 @@ pipeline {
     environment {
         LANG = 'en_US.UTF-8'
         LC_ALL = 'en_US.UTF-8'
-        NODE_ENV = 'development'
+        NODE_ENV = 'production'
         CI = 'false'
     }
 
