@@ -12,6 +12,7 @@ pipeline {
             steps {
                 echo 'Cloning repository...'
                 checkout scm
+                sh 'pwd'  // 添加此行来确认当前目录
             }
         }
 
