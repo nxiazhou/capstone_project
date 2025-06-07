@@ -1,6 +1,12 @@
 pipeline {
     agent any
 
+    options {
+        ansiColor('xterm')      // 启用 ANSI 颜色，渲染控制字符
+        timeout(time: 30, unit: 'MINUTES')  // 超时设置：pipeline 运行时间超过 30 分钟时会自动终止
+        disableConcurrentBuilds()  // 禁止并发构建，避免同时运行多个相同任务
+    }
+
     environment {
         NODE_ENV = 'production'
         LANG = 'en_US.UTF-8'
