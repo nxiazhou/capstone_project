@@ -89,22 +89,27 @@ pipeline {
             }
         }
 
-        stage('Run Next.js App in Kubernetes') {
+        stage('Start App for Testing') {
             steps {
-                echo '🚀 Starting Next.js app in Kubernetes...'
+                echo '🚦 Starting Next.js app for testing...'
                 script {
-                    try {
-                        dir('bulletin-board-next') {
-                            sh '''
-                                nohup node node_modules/.bin/next start -p 3000 & 
-                            '''
-                            echo '✅ Next.js app started successfully'
-                        }
-                    } catch (Exception e) {
-                        echo '❌ Error starting Next.js app: ${e.getMessage()}'
-                        throw e
+                    dir('bulletin-board-next') {
+                        sh '''
+                            nohup npm run start > app.log 2>&1 &
+                            echo "⏳ Waiting for port 3000 to be available..."
+                            for i in {1..20}; do
+                                nc -z localhost 3000 && echo "✅ Port 3000 is ready" && break
+                                sleep 1
+                            done
+                        '''
                     }
                 }
+            }
+        }
+
+        stage('Run Next.js App in Kubernetes') {
+            steps {
+                echo '🚀 (Placeholder) Ready to deploy to Kubernetes in the future...'
             }
         }
 

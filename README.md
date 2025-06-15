@@ -16,7 +16,7 @@ GitHub 仓库地址：👉 https://github.com/nxiazhou/capstone_project
         -e LANG=en_US.UTF-8 \
         -e LC_ALL=en_US.UTF-8 \
         -e GIT_SSH_COMMAND="ssh -F /var/jenkins_home/.ssh/config" \
-        my-jenkins:latest
+        my-jenkins-new:latest
 
 虚拟机里面需要安装的依赖如下:
 
