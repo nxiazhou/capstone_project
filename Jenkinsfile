@@ -184,13 +184,13 @@ pipeline {
             }
         }
 
-        stage('Security Scan - ZAP') {
+  stage('Security Scan - ZAP') {
             steps {
                 echo '🕷️ Running ZAP scan...'
                 script {
                     catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
                         try {
-                            sh '''
+                            sh """
                                 # 删除旧的 ZAP pm2 实例（忽略不存在的情况）
                                 pm2 delete zap || true
 
@@ -214,15 +214,28 @@ pipeline {
 
                                 echo "🔄 Waiting for spider scan to complete..."
                                 while true; do
-                                STATUS=$(curl -s "http://localhost:8090/JSON/spider/view/status/?scanId=0" | sed -n 's/.*"status":"\([0-9]\+\)".*/\1/p')
-                                echo "🔍 Spider scan progress: ${STATUS}%"
-                                if [ "$STATUS" = "100" ]; then break; fi
-                                sleep 2
+                                  STATUS=\$(curl -s "http://localhost:8090/JSON/spider/view/status/?scanId=0" | sed -n 's/.*"status":"\\([0-9]\\+\\)".*/\\1/p')
+                                  echo "🔍 Spider scan progress: \$STATUS%"
+                                  if [ "\$STATUS" = "100" ]; then break; fi
+                                  sleep 2
                                 done
-                            '''
+
+                                # 主动扫描
+                                echo "🧪 Starting active scan..."
+                                curl -s "http://localhost:8090/JSON/ascan/action/scan/?url=http://localhost:3000"
+
+                                echo "🔄 Waiting for active scan to complete..."
+                                while true; do
+                                  ASTATUS=\$(curl -s "http://localhost:8090/JSON/ascan/view/status/?scanId=0" | sed -n 's/.*"status":"\\([0-9]\\+\\)".*/\\1/p')
+                                  echo "🔥 Active scan progress: \$ASTATUS%"
+                                  if [ "\$ASTATUS" = "100" ]; then break; fi
+                                  sleep 2
+                                done
+
+                            """
                             echo '✅ ZAP scan completed'
                         } catch (Exception e) {
-                            echo '❌ Error running ZAP scan: ${e.getMessage()}'
+                            echo "❌ Error running ZAP scan: \${e.getMessage()}"
                             throw e
                         }
                     }
