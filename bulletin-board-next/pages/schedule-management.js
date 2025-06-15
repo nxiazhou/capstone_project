@@ -1,9 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import Sidebar from "../components/Sidebar";
 import DeleteConfirmation from "../components/DeleteConfirmation";
 import Pagination from "../components/Pagination";
 import Select from "react-select";
-import { useMemo } from "react";
 import { useRouter } from "next/router";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 
@@ -23,10 +22,10 @@ export default function ScheduleManagement() {
   const [contentOptions, setContentOptions] = useState([]);
   const [selectedContents, setSelectedContents] = useState([]);
   const [selectedPanelIds, setSelectedPanelIds] = useState([]);
-  const panelOptions = [
+  const panelOptions = useMemo(() => [
     { value: 1, label: "Panel 1" },
     { value: 2, label: "Panel 2" }
-  ];
+  ], []);
 
   // memo 处理已选内容项
   const selectedContentOptions = useMemo(() => {
@@ -43,7 +42,7 @@ export default function ScheduleManagement() {
   }, [panelOptions, selectedPanelIds]);
 
 
-  const fetchSchedules = async () => {
+  const fetchSchedules = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
@@ -71,11 +70,11 @@ export default function ScheduleManagement() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentPage, pageSize, searchKeyword, dateFilter]);
 
   useEffect(() => {
     fetchSchedules();
-  }, [currentPage, pageSize, searchKeyword, dateFilter]);
+  }, [fetchSchedules]);
 
   useEffect(() => {
     if (showForm && selectedSchedule !== undefined) {

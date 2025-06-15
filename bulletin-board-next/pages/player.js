@@ -138,7 +138,7 @@ export default function Player() {
         imageTimerRef.current = null;
       }
     };
-  }, [isPlaying, currentIndex, contents]);
+  }, [isPlaying, currentIndex, contents, handleNext]);
 
   // ✅ 全屏切换监听
   const handleMouseMove = () => {

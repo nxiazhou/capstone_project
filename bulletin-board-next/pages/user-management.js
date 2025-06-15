@@ -62,7 +62,7 @@ export default function Usermanagement() {
         .then((data) => setCurrentUser(data))
         .catch((err) => console.error("Fetch current user failed:", err));
     }
-  }, []);
+  }, [router]);
 
   const handleSearchChange = (e) => setSearchKeyword(e.target.value);
   const handleRoleChange = (e) => setRoleFilter(e.target.value);

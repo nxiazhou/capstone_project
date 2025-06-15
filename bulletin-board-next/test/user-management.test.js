@@ -1,16 +1,18 @@
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import Usermanagement from '../pages/user-management';
 import '@testing-library/jest-dom';
 
-// Mock useRouter
+// ✅ 使用 mockPush 避免作用域错误
+const mockPush = jest.fn();
+
 jest.mock('next/router', () => ({
   useRouter: () => ({
-    push: jest.fn(),
+    push: mockPush,
   }),
 }));
 
-// Mock localStorage
+// ✅ mock localStorage
 const localStorageMock = (() => {
   let store = {};
   return {
@@ -23,31 +25,45 @@ Object.defineProperty(window, 'localStorage', {
   value: localStorageMock,
 });
 
-// Mock fetch
+// ✅ 全局 mock fetch
 global.fetch = jest.fn();
 
 describe('User Management Page', () => {
   beforeEach(() => {
-    fetch.mockClear();
+    fetch.mockReset();
     localStorage.clear();
+    mockPush.mockClear();
+
+    // 默认 mock 返回 admin 用户列表
+    fetch.mockImplementation(() =>
+      Promise.resolve({
+        ok: true,
+        json: async () => ({
+          content: [
+            {
+              userId: 1,
+              username: 'admin1',
+              email: 'admin@example.com',
+              role: 'admin',
+              subscriptionStatus: 'active',
+            },
+          ],
+        }),
+      })
+    );
   });
 
-  it('redirects to login if no token is found', () => {
+  it('redirects to login if no token is found', async () => {
     render(<Usermanagement />);
-    expect(window.localStorage.getItem).toHaveBeenCalledWith('authToken');
+    expect(localStorage.getItem).toHaveBeenCalledWith('authToken');
+    await waitFor(() => {
+      expect(mockPush).toHaveBeenCalledWith('/login');
+    });
   });
 
   it('renders admin user table if admin role is set', async () => {
     localStorage.setItem('authToken', 'mocked-token');
     localStorage.setItem('authRole', 'admin');
-    fetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({
-        content: [
-          { userId: 1, username: 'admin1', email: 'admin@example.com', role: 'admin', subscriptionStatus: 'active' },
-        ],
-      }),
-    });
 
     render(<Usermanagement />);
     expect(await screen.findByText('User Management')).toBeInTheDocument();
@@ -55,10 +71,11 @@ describe('User Management Page', () => {
     expect(screen.getByText('+ Add New User')).toBeInTheDocument();
   });
 
-  // ❗ Uncomment the following test to enable normal user interface test
+  // ❌ 已注释：跳过普通用户测试
   // it('renders user profile if role is user', async () => {
-  //   localStorage.setItem('authToken', 'mocked-token');
+  //   localStorage.setItem('authToken', 'user-token');
   //   localStorage.setItem('authRole', 'user');
+
   //   fetch.mockResolvedValueOnce({
   //     ok: true,
   //     json: async () => ({
