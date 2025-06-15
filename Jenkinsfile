@@ -2,9 +2,9 @@ pipeline {
     agent any
 
     options {
-        ansiColor('xterm')      // Enable ANSI color for log output
-        timeout(time: 30, unit: 'MINUTES')  // Timeout: automatically terminate pipeline after 30 minutes
-        disableConcurrentBuilds()  // Prevent concurrent builds to avoid conflicts
+        ansiColor('xterm')     
+        timeout(time: 30, unit: 'MINUTES')
+        disableConcurrentBuilds()
     }
 
     environment {
@@ -17,13 +17,13 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                echo '\uD83D\uDCC5 Cloning repository...'
+                echo '📅 Cloning repository...'
                 script {
                     try {
                         checkout scm
-                        echo '\u2705 Repository cloned successfully'
+                        echo '✅ Repository cloned successfully'
                     } catch (Exception e) {
-                        echo '\u274C Error during checkout: ${e.getMessage()}'
+                        echo '❌ Error during checkout: ${e.getMessage()}'
                         throw e
                     }
                 }
@@ -37,17 +37,16 @@ pipeline {
                         dir('bulletin-board-next') {
                             def changes = sh(script: "git diff --name-only HEAD HEAD~1", returnStdout: true).trim()
                             if (changes.contains("package.json")) {
-                                echo '\uD83D\uDD0D package.json has changed. Clearing cache...'
+                                echo '🔍 package.json has changed. Clearing cache...'
                                 sh '''
-                                    # Remove old dependencies and build cache
                                     rm -rf node_modules package-lock.json .next
                                 '''
                             } else {
-                                echo '\uD83D\uDD11 No changes in package.json. Skipping cache clear.'
+                                echo '🔒 No changes in package.json. Skipping cache clear.'
                             }
                         }
                     } catch (Exception e) {
-                        echo '\u274C Error checking package.json changes: ${e.getMessage()}'
+                        echo '❌ Error checking package.json changes: ${e.getMessage()}'
                         throw e
                     }
                 }
@@ -56,18 +55,17 @@ pipeline {
 
         stage('Install Dependencies') {
             steps {
-                echo '\uD83D\uDCE6 Installing all dependencies...'
+                echo '📦 Installing all dependencies...'
                 script {
                     try {
                         dir('bulletin-board-next') {
-                            // Install dependencies directly without caching node_modules
                             sh '''
                                 npm install --save-dev
-                                echo "\\u2705 Npm dependencies installed"
+                                echo "✅ Npm dependencies installed"
                             '''
                         }
                     } catch (Exception e) {
-                        echo '\u274C Error during dependencies installation: ${e.getMessage()}'
+                        echo '❌ Error during dependencies installation: ${e.getMessage()}'
                         throw e
                     }
                 }
@@ -76,16 +74,15 @@ pipeline {
 
         stage('Build Project') {
             steps {
-                echo '\uD83D\uDD28 Building Next.js app...'
+                echo '🔨 Building Next.js app...'
                 script {
                     try {
                         dir('bulletin-board-next') {
-                            // Build project after dependencies are installed
-                            sh 'npm run build || { echo "\\u274C Build failed"; exit 1; }'
-                            echo '\u2705 Build completed successfully'
+                            sh 'npm run build || { echo "❌ Build failed"; exit 1; }'
+                            echo '✅ Build completed successfully'
                         }
                     } catch (Exception e) {
-                        echo '\u274C Error during build: ${e.getMessage()}'
+                        echo '❌ Error during build: ${e.getMessage()}'
                         throw e
                     }
                 }
@@ -99,7 +96,6 @@ pipeline {
                     try {
                         dir('bulletin-board-next') {
                             sh '''
-                                # Start Next.js app directly in the background
                                 nohup node node_modules/.bin/next start -p 3000 & 
                             '''
                             echo '✅ Next.js app started successfully'
@@ -114,16 +110,16 @@ pipeline {
 
         stage('Run Unit Tests') {
             steps {
-                echo '\uD83E\uDDD2 Running unit tests...'
+                echo '🧠 Running unit tests...'
                 script {
                     catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
                         try {
                             dir('bulletin-board-next') {
-                                sh 'NODE_ENV=development npm run test || { echo "\\u274C Unit tests failed"; exit 1; }'
-                                echo '\u2705 Unit tests passed'
+                                sh 'NODE_ENV=development npm run test || { echo "❌ Unit tests failed"; exit 1; }'
+                                echo '✅ Unit tests passed'
                             }
                         } catch (Exception e) {
-                            echo '\u274C Error running unit tests: ${e.getMessage()}'
+                            echo '❌ Error running unit tests: ${e.getMessage()}'
                             throw e
                         }
                     }
@@ -133,7 +129,7 @@ pipeline {
 
         stage('Run Integration Tests') {
             steps {
-                echo '\uD83D\uDD04 Running integration tests...'
+                echo '🔄 Running integration tests...'
                 script {
                     catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
                         try {
@@ -142,30 +138,69 @@ pipeline {
                                     export DISPLAY=:99
                                     nohup Xvfb :99 -screen 0 1920x1080x24 > /dev/null 2>&1 &
                                     sleep 2
-                                    npx cypress run || { echo "\\u274C Integration tests failed"; exit 1; }
+                                    npx cypress run || { echo "❌ Integration tests failed"; exit 1; }
                                 '''
-                                echo '\u2705 Integration tests passed'
+                                echo '✅ Integration tests passed'
                             }
                         } catch (Exception e) {
-                            echo '\u274C Error running integration tests: ${e.getMessage()}'
+                            echo '❌ Error running integration tests: ${e.getMessage()}'
                             throw e
                         }
                     }
                 }
             }
         }
-        
+
+        stage('Security Scan - Snyk') {
+            steps {
+                echo '🛡️ Running Snyk scan...'
+                script {
+                    catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                        try {
+                            dir('bulletin-board-next') {
+                                sh '''
+                                    snyk test || { echo "❌ Snyk scan failed"; exit 1; }
+                                '''
+                                echo '✅ Snyk scan completed'
+                            }
+                        } catch (Exception e) {
+                            echo '❌ Error running Snyk scan: ${e.getMessage()}'
+                            throw e
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Security Scan - ZAP') {
+            steps {
+                echo '🕷️ Running ZAP scan...'
+                script {
+                    catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                        try {
+                            sh '''
+                                zap.sh -daemon -host 0.0.0.0 -port 8090 -config api.disablekey=true > /dev/null &
+                                sleep 5
+                                curl "http://localhost:8090/JSON/ascan/action/scan/?url=http://localhost:3000"
+                                sleep 15
+                                curl -o zap-report.html http://localhost:8090/OTHER/core/other/htmlreport/
+                            '''
+                            echo '✅ ZAP scan completed'
+                        } catch (Exception e) {
+                            echo '❌ Error running ZAP scan: ${e.getMessage()}'
+                            throw e
+                        }
+                    }
+                }
+            }
+        }
+
         stage('Get ECS Public IP') {
             steps {
-                echo '\uD83C\uDF10 Getting ECS public IP...'
+                echo '🌐 Getting ECS public IP...'
                 script {
-                    // Use curl to get the public IP address
                     def publicIp = sh(script: "curl -s ifconfig.me", returnStdout: true).trim()
-                    
-                    // Append the port ":3000"
                     def url = publicIp + ":3000"
-                    
-                    // Output the result
                     echo "The URL with port is: ${url}"
                 }
             }

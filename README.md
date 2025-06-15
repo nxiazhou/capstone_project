@@ -28,7 +28,7 @@ GitHub 仓库地址：👉 https://github.com/nxiazhou/capstone_project
 
 windows本地上传linux命令
 
-    scp -i "C:/develop/ssh/Dddd2025.pem" C:/develop/ssh/jenkins-plugins-2.504.2.zip root@47.97.211.83:/var/lib/jenkins/jenkins-plugins-2.504.2.zip
+    scp -i "C:/develop/ssh/new_key" C:/develop/ssh/jenkins-plugins-2.504.2.zip root@47.97.211.83:/var/lib/jenkins/jenkins-plugins-2.504.2.zip
 
 jenkins工作目录（Docker容器外）:   
 
