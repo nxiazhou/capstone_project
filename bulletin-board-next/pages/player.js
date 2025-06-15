@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback  } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/router';
 import Sidebar from "../components/Sidebar";
@@ -18,10 +18,46 @@ export default function Player() {
   const [startTime, setStartTime] = useState(null);
   const [endTime, setEndTime] = useState(null);
 
-  const currentContent = contents[currentIndex];
+  const currentContent = contents.length > 0 ? contents[currentIndex % contents.length] : null;
+
+  const [isClient, setIsClient] = useState(false);
+
+  const handleNext = useCallback(() => {
+    setCurrentIndex(prev => {
+      return (prev + 1) % Math.max(1, contents.length);
+    });
+  }, [contents.length]);
+    
+  const handlePlayPause = () => {
+    setIsPlaying(!isPlaying);
+    if (videoRef.current) {
+      isPlaying ? videoRef.current.pause() : videoRef.current.play();
+    }
+  };
+
+
+  const handlePrevious = () => {
+    if (contents.length > 0) {
+      setCurrentIndex(prev => {
+        const length = contents.length;
+        return length === 0 ? 0 : (prev - 1 + length) % length;
+      });
+
+    }
+  };
+
+  const handleExit = () => {
+    if (isFullscreen) toggleFullscreen();
+    router.push('/schedule-management');
+  };
 
   // ✅ 获取调度详情（包含 startTime 和 endTime）
   useEffect(() => {
+    setIsClient(true); // ✅ 告诉 React “我现在在浏览器了”
+  }, []);
+  useEffect(() => {
+    if (!isClient || !scheduleId) return;
+
     const fetchScheduleDetail = async () => {
       if (!scheduleId) return;
 
@@ -57,7 +93,7 @@ export default function Player() {
     };
 
     fetchScheduleDetail();
-  }, [scheduleId]);
+  }, [scheduleId, isClient]);
 
   // ✅ 控制是否允许播放：时间范围内才播放
   useEffect(() => {
@@ -81,32 +117,30 @@ export default function Player() {
   }, [startTime, endTime, isPlaying]);
 
   // ✅ 控制 image 自动播放
-  useEffect(() => {
-    if (!currentContent || !isPlaying) return;
+  const imageTimerRef = useRef(null);
 
-    let timer;
-    if (currentContent.mediaType === 'image') {
-      timer = setTimeout(() => {
-        handleNext();
-      }, 5000);
+  useEffect(() => {
+    if (imageTimerRef.current) {
+      clearTimeout(imageTimerRef.current);
+      imageTimerRef.current = null;
     }
 
+    const current = contents[currentIndex];
+    if (!isPlaying || !current || current.mediaType !== 'image') return;
+
+    imageTimerRef.current = setTimeout(() => {
+      handleNext();
+    }, 5000);
+
     return () => {
-      if (timer) clearTimeout(timer);
+      if (imageTimerRef.current) {
+        clearTimeout(imageTimerRef.current);
+        imageTimerRef.current = null;
+      }
     };
-  }, [currentContent, isPlaying]);
+  }, [isPlaying, currentIndex, contents]);
 
   // ✅ 全屏切换监听
-  useEffect(() => {
-    const handleFullscreenChange = () => {
-      setIsFullscreen(!!document.fullscreenElement);
-    };
-    document.addEventListener('fullscreenchange', handleFullscreenChange);
-    return () => {
-      document.removeEventListener('fullscreenchange', handleFullscreenChange);
-    };
-  }, []);
-
   const handleMouseMove = () => {
     setShowControls(true);
     if (controlsTimeout) clearTimeout(controlsTimeout);
@@ -132,30 +166,6 @@ export default function Player() {
     }
   };
 
-  const handlePlayPause = () => {
-    setIsPlaying(!isPlaying);
-    if (videoRef.current) {
-      isPlaying ? videoRef.current.pause() : videoRef.current.play();
-    }
-  };
-
-  const handleNext = () => {
-    if (contents.length > 0) {
-      setCurrentIndex((prev) => (prev + 1) % contents.length);
-    }
-  };
-
-  const handlePrevious = () => {
-    if (contents.length > 0) {
-      setCurrentIndex((prev) => (prev === 0 ? contents.length - 1 : prev - 1));
-    }
-  };
-
-  const handleExit = () => {
-    if (isFullscreen) toggleFullscreen();
-    router.push('/schedule-management');
-  };
-
   if (!currentContent) return <div className="text-white p-10">Loading schedule content...</div>;
 
   return (
@@ -163,7 +173,7 @@ export default function Player() {
       <Sidebar />
       <div
         ref={containerRef}
-        className="flex-1 bg-black flex flex-col items-center justify-center relative"
+        className="flex-1 bg-black flex flex-col items-center justify-center relative h-[calc(100vh-120px)]"
         onMouseMove={handleMouseMove}
       >
         <button
@@ -184,7 +194,7 @@ export default function Player() {
           {isFullscreen ? '⤓ Exit Fullscreen' : '⤢ Fullscreen'}
         </button>
 
-        <div className={`w-full ${isFullscreen ? 'h-full' : 'max-w-6xl aspect-video'} bg-gray-900 relative`}>
+        <div className="relative w-full" style={{ height: 'calc(100vh - 120px)' }}>
           {currentContent.mediaType === 'video' ? (
             <video
               ref={videoRef}
@@ -193,17 +203,18 @@ export default function Player() {
               controls
               autoPlay
               playsInline
-              muted
               onEnded={handleNext}
             />
           ) : (
-            <div className="w-full h-full relative">
-              <img
-                src={currentContent.url}
-                alt={currentContent.name}
-                className="w-full h-full object-contain"
-              />
-            </div>
+            <Image
+              key={currentContent.url} // ⭐️ 强制重新挂载 Image
+              src={currentContent.url}
+              alt={currentContent.name}
+              fill
+              sizes="(min-width: 1280px) 85vw, 100vw"
+              style={{ objectFit: 'contain' }}
+              priority
+            />
           )}
         </div>
 
