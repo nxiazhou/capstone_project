@@ -191,11 +191,34 @@ pipeline {
                     catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
                         try {
                             sh '''
-                                zap.sh -daemon -host 0.0.0.0 -port 8090 -config api.disablekey=true > /dev/null &
-                                sleep 5
-                                curl "http://localhost:8090/JSON/ascan/action/scan/?url=http://localhost:3000"
-                                sleep 15
-                                curl -o zap-report.html http://localhost:8090/OTHER/core/other/htmlreport/
+                                # 删除旧的 ZAP pm2 实例（忽略不存在的情况）
+                                pm2 delete zap || true
+
+                                # 使用 pm2 启动 ZAP，后台守护
+                                pm2 start /opt/zap/zap.sh --name zap -- \
+                                    -daemon -host 0.0.0.0 -port 8090 -config api.disablekey=true
+
+                                # 等待 ZAP 启动成功（最多 60 秒）
+                                echo "🔄 Waiting for ZAP to be ready..."
+                                for i in {1..30}; do
+                                  if curl -s http://localhost:8090 > /dev/null; then
+                                    echo "✅ ZAP is running"
+                                    break
+                                  fi
+                                  sleep 2
+                                done
+
+                                # Spider 爬虫扫描
+                                echo "🕷️ Starting spider scan..."
+                                curl -s "http://localhost:8090/JSON/spider/action/scan/?url=http://localhost:3000"
+
+                                echo "🔄 Waiting for spider scan to complete..."
+                                while true; do
+                                STATUS=$(curl -s "http://localhost:8090/JSON/spider/view/status/?scanId=0" | sed -n 's/.*"status":"\([0-9]\+\)".*/\1/p')
+                                echo "🔍 Spider scan progress: ${STATUS}%"
+                                if [ "$STATUS" = "100" ]; then break; fi
+                                sleep 2
+                                done
                             '''
                             echo '✅ ZAP scan completed'
                         } catch (Exception e) {
