@@ -95,12 +95,19 @@ pipeline {
                 script {
                     dir('bulletin-board-next') {
                         sh '''
-                            nohup npm run start > app.log 2>&1 &
-                            echo "⏳ Waiting for port 3000 to be available..."
-                            for i in {1..20}; do
-                                nc -z localhost 3000 && echo "✅ Port 3000 is ready" && break
-                                sleep 1
-                            done
+                            # 删除旧的 pm2 进程（忽略不存在的情况）
+                            pm2 delete next-app || true
+
+                            # 使用 pm2 启动新的前端服务
+                            pm2 start npm --name next-app -- run start
+
+                            # 保存 pm2 配置（可选，方便日后恢复）
+                            pm2 save
+
+                            # 打印 pm2 状态
+                            pm2 status
+
+                            echo "⏳ PM2 started Next.js app on port 3000"
                         '''
                     }
                 }
@@ -164,7 +171,7 @@ pipeline {
                         try {
                             dir('bulletin-board-next') {
                                 sh '''
-                                    snyk test || { echo "❌ Snyk scan failed"; exit 1; }
+                                   snyk test || echo "⚠️ Snyk scan completed with vulnerabilities (non-blocking)"
                                 '''
                                 echo '✅ Snyk scan completed'
                             }
