@@ -184,58 +184,56 @@ pipeline {
             }
         }
 
-  stage('Security Scan - ZAP') {
+        stage('Security Scan - ZAP') {
             steps {
                 echo '🕷️ Running ZAP scan...'
                 script {
                     catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
                         try {
-                            sh """
-                                # 删除旧的 ZAP pm2 实例（忽略不存在的情况）
-                                pm2 delete zap || true
+                            sh '''
+                                # ✅ 先找出占用 8090 端口的进程并杀掉
+                                fuser -k 8090/tcp || true
 
-                                # 使用 pm2 启动 ZAP，后台守护
-                                pm2 start /opt/zap/zap.sh --name zap -- \
-                                    -daemon -host 0.0.0.0 -port 8090 -config api.disablekey=true
+                                # ✅ 再用 nohup 启动 ZAP 守护进程
+                                nohup /opt/zap/zap.sh -daemon -host 0.0.0.0 -port 8090 -config api.disablekey=true > /dev/null 2>&1 &
 
                                 # 等待 ZAP 启动成功（最多 60 秒）
                                 echo "🔄 Waiting for ZAP to be ready..."
                                 for i in {1..30}; do
-                                  if curl -s http://localhost:8090 > /dev/null; then
+                                if curl -s http://localhost:8090 > /dev/null; then
                                     echo "✅ ZAP is running"
                                     break
-                                  fi
-                                  sleep 2
+                                fi
+                                sleep 2
                                 done
 
                                 # Spider 爬虫扫描
                                 echo "🕷️ Starting spider scan..."
-                                curl -s "http://localhost:8090/JSON/spider/action/scan/?url=http://localhost:3000"
+                                SCAN_ID=$(curl -s "http://localhost:8090/JSON/spider/action/scan/?url=http://localhost:3000" | sed -n 's/.*"scan":"\([0-9]\+\)".*/\1/p')
 
                                 echo "🔄 Waiting for spider scan to complete..."
                                 while true; do
-                                  STATUS=\$(curl -s "http://localhost:8090/JSON/spider/view/status/?scanId=0" | sed -n 's/.*"status":"\\([0-9]\\+\\)".*/\\1/p')
-                                  echo "🔍 Spider scan progress: \$STATUS%"
-                                  if [ "\$STATUS" = "100" ]; then break; fi
-                                  sleep 2
+                                STATUS=$(curl -s "http://localhost:8090/JSON/spider/view/status/?scanId=${SCAN_ID}" | sed -n 's/.*"status":"\([0-9]\+\)".*/\1/p')
+                                echo "🔍 Spider scan progress: ${STATUS}%"
+                                if [ "$STATUS" = "100" ]; then break; fi
+                                sleep 2
                                 done
 
                                 # 主动扫描
                                 echo "🧪 Starting active scan..."
-                                curl -s "http://localhost:8090/JSON/ascan/action/scan/?url=http://localhost:3000"
+                                ASCAN_ID=$(curl -s "http://localhost:8090/JSON/ascan/action/scan/?url=http://localhost:3000" | sed -n 's/.*"scan":"\([0-9]\+\)".*/\1/p')
 
                                 echo "🔄 Waiting for active scan to complete..."
                                 while true; do
-                                  ASTATUS=\$(curl -s "http://localhost:8090/JSON/ascan/view/status/?scanId=0" | sed -n 's/.*"status":"\\([0-9]\\+\\)".*/\\1/p')
-                                  echo "🔥 Active scan progress: \$ASTATUS%"
-                                  if [ "\$ASTATUS" = "100" ]; then break; fi
-                                  sleep 2
+                                ASTATUS=$(curl -s "http://localhost:8090/JSON/ascan/view/status/?scanId=${ASCAN_ID}" | sed -n 's/.*"status":"\([0-9]\+\)".*/\1/p')
+                                echo "🔥 Active scan progress: ${ASTATUS}%"
+                                if [ "$ASTATUS" = "100" ]; then break; fi
+                                sleep 2
                                 done
-
-                            """
+                            '''
                             echo '✅ ZAP scan completed'
                         } catch (Exception e) {
-                            echo "❌ Error running ZAP scan: \${e.getMessage()}"
+                            echo "❌ Error running ZAP scan: ${e.getMessage()}"
                             throw e
                         }
                     }
