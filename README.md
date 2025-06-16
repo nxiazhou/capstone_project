@@ -10,6 +10,8 @@ GitHub 仓库地址：👉 https://github.com/nxiazhou/capstone_project
 前端的运行jenkins命令如下:
 
     docker run -d --name jenkins \
+    --dns=8.8.8.8 \
+    --add-host=host.docker.internal:host-gateway \
     -p 8080:8080 -p 50000:50000 -p 3000:3000 \
     -v /var/run/docker.sock:/var/run/docker.sock \
     -v /var/lib/jenkins:/var/jenkins_home \
@@ -359,9 +361,21 @@ npm run dev
 
 
 ## Kubernetes 配置
+登录:
+
+    docker login crpi-hmkoucghneqevmd4.cn-hangzhou.personal.cr.aliyuncs.com
+构建镜像：
+
+    docker build -t crpi-hmkoucghneqevmd4.cn-hangzhou.personal.cr.aliyuncs.com/dddd_nxz/dddd_platform:latest .
+
+推送到ACR中:
+
+    docker push crpi-hmkoucghneqevmd4.cn-hangzhou.personal.cr.aliyuncs.com/dddd_nxz/dddd_platform:latest
+
 加载环境变量:
 
     export KUBECONFIG=/root/.kube/config
+
 停止所有的服务：
 
     kubectl delete all --all -n default

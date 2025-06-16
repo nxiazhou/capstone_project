@@ -116,7 +116,70 @@ pipeline {
 
         stage('Run Next.js App in Kubernetes') {
             steps {
-                echo '🚀 (Placeholder) Ready to deploy to Kubernetes in the future...'
+                dir('bulletin-board-next') {
+                    echo '🚀 Starting Kubernetes deployment for Next.js app...'
+                    script {
+                        try {
+                            // 🔐 登录 ACR
+                            sh '''
+                                echo "🔐 Logging into ACR..."
+                                docker login crpi-hmkoucghneqevmd4.cn-hangzhou.personal.cr.aliyuncs.com \
+                                    -u "${ACR_USERNAME}" -p "${ACR_PASSWORD}"
+                            '''
+
+                            // 🏗 构建并推送镜像
+                            sh '''
+                                echo "🏗 Building Docker image..."
+                                docker build -t crpi-hmkoucghneqevmd4.cn-hangzhou.personal.cr.aliyuncs.com/dddd_nxz/dddd_platform:latest .
+
+                                echo "📤 Pushing Docker image to ACR..."
+                                docker push crpi-hmkoucghneqevmd4.cn-hangzhou.personal.cr.aliyuncs.com/dddd_nxz/dddd_platform:latest
+                            '''
+
+                            // ☁️ 加载 kubeconfig
+                            sh '''
+                                echo "🔧 Setting KUBECONFIG..."
+                                export KUBECONFIG=/root/.kube/config
+
+                                echo "🧹 Cleaning old Kubernetes resources..."
+                                kubectl delete all --all -n default || true
+                                kubectl delete ingress --all -n default || true
+                            '''
+
+                            // 🚀 应用 YAML 文件
+                            sh '''
+                                echo "📄 Applying Kubernetes manifests..."
+                                kubectl apply -f /root/deploy-yamls/next-deploy.yaml
+                                kubectl apply -f /root/deploy-yamls/next-service.yaml
+                                kubectl apply -f /root/deploy-yamls/next-ingress.yaml
+                            '''
+
+                            // 🔄 等待 Pod 变为 Running
+                            sh '''
+                                echo "⏳ Waiting for pod to be Running..."
+                                for i in {1..30}; do
+                                    STATUS=$(kubectl get pods -o jsonpath="{.items[0].status.phase}")
+                                    echo "Current pod status: $STATUS"
+                                    if [ "$STATUS" = "Running" ]; then
+                                        echo "✅ Pod is running."
+                                        break
+                                    fi
+                                    sleep 5
+                                done
+                            '''
+
+                            // 🌐 获取 Ingress IP
+                            sh '''
+                                echo "🌐 Fetching ingress public IP..."
+                                kubectl get svc -n kube-system | grep nginx-ingress-lb || echo "⚠️ Ingress IP not found"
+                            '''
+                        } catch (Exception e) {
+                            echo "❌ Kubernetes deployment failed: ${e.getMessage()}"
+                            currentBuild.result = 'FAILURE'
+                            throw e
+                        }
+                    }
+                }
             }
         }
 
