@@ -198,10 +198,10 @@ pipeline {
                                     -addoninstall false \
                                     -addondisable selenium > /tmp/zap.log 2>&1 &
 
-                                echo "🔄 Waiting for ZAP to be ready..."
+                                echo "🔄 Waiting for ZAP API to be ready..."
                                 for i in {1..30}; do
-                                    if grep -q "ZAP is now listening" /tmp/zap.log; then
-                                        echo "✅ ZAP is running"
+                                    if curl -s http://localhost:8090/JSON/core/view/version/ | grep -q "version"; then
+                                        echo "✅ ZAP API is ready"
                                         break
                                     fi
                                     sleep 2
