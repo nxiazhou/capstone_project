@@ -191,41 +191,59 @@ pipeline {
                     catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
                         try {
                             sh '''
-                                # ✅ 杀掉之前占用 8090 端口的进程
-                                fuser -k 8090/tcp || true
+                                # ✅ 杀掉之前占用 8090 端口的进程（如果有）
+                                pkill -f 'zap.*8090' || true
 
-                                # ✅ 使用 nohup 后台启动 ZAP
+                                # ✅ 启动 ZAP Proxy
                                 nohup /opt/zap/zap.sh -daemon -host 0.0.0.0 -port 8090 -config api.disablekey=true > /dev/null 2>&1 &
 
                                 echo "🔄 Waiting for ZAP to be ready..."
                                 for i in {1..30}; do
-                                if curl -s http://localhost:8090 > /dev/null; then
-                                    echo "✅ ZAP is running"
-                                    break
-                                fi
-                                sleep 2
+                                    if curl -s http://localhost:8090 > /dev/null; then
+                                        echo "✅ ZAP is running"
+                                        break
+                                    fi
+                                    sleep 2
                                 done
 
-                                # 🕷️ Spider 扫描
+                                # 🕷️ 执行 Spider 扫描
                                 echo "🕷️ Starting spider scan..."
-                                SPIDER_ID=$(curl -s "http://localhost:8090/JSON/spider/action/scan/?url=http://localhost:3000" | sed -n 's/.*"scan":"\\([0-9][0-9]*\\)".*/\\1/p')
+                                SPIDER_RESPONSE=$(curl -s "http://localhost:8090/JSON/spider/action/scan/?url=http://localhost:3000")
+                                echo "📦 Spider response: $SPIDER_RESPONSE"
+                                SPIDER_ID=$(echo "$SPIDER_RESPONSE" | sed -n 's/.*"scan":"\([0-9]*\)".*/\\1/p')
+                                echo "📦 Spider id: $SPIDER_ID"
+
+                                if [ -z "$SPIDER_ID" ]; then
+                                    echo "❌ Failed to get Spider ID"
+                                    exit 1
+                                fi
+
                                 echo "🔄 Waiting for spider scan to complete..."
                                 while true; do
-                                STATUS=$(curl -s "http://localhost:8090/JSON/spider/view/status/?scanId=${SPIDER_ID}" | sed -n 's/.*"status":"\\([0-9][0-9]*\\)".*/\\1/p')
-                                echo "🔍 Spider scan progress: ${STATUS}%"
-                                if [ "$STATUS" = "100" ]; then break; fi
-                                sleep 2
+                                    STATUS=$(curl -s "http://localhost:8090/JSON/spider/view/status/?scanId=$SPIDER_ID" | sed -n 's/.*"status":"\([0-9]*\)".*/\1/p')
+                                    echo "🔍 Spider scan progress: ${STATUS}%"
+                                    if [ "$STATUS" = "100" ]; then break; fi
+                                    sleep 2
                                 done
 
-                                # 🧪 主动扫描
+                                # 🧪 执行 Active 扫描
                                 echo "🧪 Starting active scan..."
-                                ASCAN_ID=$(curl -s "http://localhost:8090/JSON/ascan/action/scan/?url=http://localhost:3000" | sed -n 's/.*"scan":"\\([0-9][0-9]*\\)".*/\\1/p')
+                                ASCAN_RESPONSE=$(curl -s "http://localhost:8090/JSON/ascan/action/scan/?url=http://localhost:3000")
+                                echo "📦 Active scan response: $ASCAN_RESPONSE"
+                                ASCAN_ID=$(echo "$ASCAN_RESPONSE" | sed -n 's/.*"scan":"\([0-9]*\)".*/\\1/p')
+                                echo "📦 Active scan id: $ASCAN_ID"
+                                
+                                if [ -z "$ASCAN_ID" ]; then
+                                    echo "❌ Failed to get Active Scan ID"
+                                    exit 1
+                                fi
+
                                 echo "🔄 Waiting for active scan to complete..."
                                 while true; do
-                                ASTATUS=$(curl -s "http://localhost:8090/JSON/ascan/view/status/?scanId=${ASCAN_ID}" | sed -n 's/.*"status":"\\([0-9][0-9]*\\)".*/\\1/p')
-                                echo "🔥 Active scan progress: ${ASTATUS}%"
-                                if [ "$ASTATUS" = "100" ]; then break; fi
-                                sleep 2
+                                    ASTATUS=$(curl -s "http://localhost:8090/JSON/ascan/view/status/?scanId=$ASCAN_ID" | sed -n 's/.*"status":"\([0-9]*\)".*/\\1/p')
+                                    echo "🔥 Active scan progress: ${ASTATUS}%"
+                                    if [ "$ASTATUS" = "100" ]; then break; fi
+                                    sleep 2
                                 done
                             '''
                             echo '✅ ZAP scan completed'

@@ -9,14 +9,16 @@ GitHub 仓库地址：👉 https://github.com/nxiazhou/capstone_project
 
 前端的运行jenkins命令如下:
 
-    sudo docker run -d --name jenkins \
-        -p 8080:8080 -p 50000:50000 -p 3000:3000 \
-        -v /var/lib/jenkins:/var/jenkins_home \
-        -e JENKINS_HOME=/var/jenkins_home \
-        -e LANG=en_US.UTF-8 \
-        -e LC_ALL=en_US.UTF-8 \
-        -e GIT_SSH_COMMAND="ssh -F /var/jenkins_home/.ssh/config" \
-        my-jenkins-new:latest
+    docker run -d --name jenkins \
+    -p 8080:8080 -p 50000:50000 -p 3000:3000 \
+    -v /var/lib/jenkins:/var/jenkins_home \
+    -v /root/.kube/config:/root/.kube/config \
+    -v /root/docker-jenkins:/root/deploy-yamls \
+    -e JENKINS_HOME=/var/jenkins_home \
+    -e LANG=en_US.UTF-8 \
+    -e LC_ALL=en_US.UTF-8 \
+    -e GIT_SSH_COMMAND="ssh -F /var/jenkins_home/.ssh/config" \
+    my-jenkins-new:latest
 
 虚拟机里面需要安装的依赖如下:
 
@@ -353,3 +355,30 @@ npm run dev
 - 若测试访问失败（如 404 或 500），请确保页面路径正确且组件导入无误。
 
 - 本项目已配置 `.babelrc` 使用 `"runtime": "automatic"`，支持 **JSX 自动引入 React**，无需每个页面写 `import React from 'react'`。
+
+
+## Kubernetes 配置
+加载环境变量:
+
+    export KUBECONFIG=/root/.kube/config
+停止所有的服务：
+
+    kubectl delete all --all -n default
+    kubectl delete ingress --all -n default
+
+应用配置:
+
+    kubectl apply -f /root/deploy-yamls/next-deploy.yaml
+    kubectl apply -f /root/deploy-yamls/next-service.yaml
+    kubectl apply -f /root/deploy-yamls/next-ingress.yaml
+    kubectl get pods
+    kubectl get svc
+    kubectl get ingress
+
+查看所有资源:
+
+    kubectl get all --all-namespaces
+
+查看ip地址:
+
+    kubectl get svc -n kube-system | grep nginx-ingress-lb
