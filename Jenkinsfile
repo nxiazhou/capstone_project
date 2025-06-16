@@ -65,7 +65,8 @@ pipeline {
 
                             sh '''
                                 echo "🌐 Fetching ingress public IP..."
-                                eval "$KUBE_CMD get svc -n kube-system | grep nginx-ingress-lb" || echo "⚠️ Ingress IP not found"
+                                IP=$(eval "$KUBE_CMD get svc -n kube-system | grep nginx-ingress-lb" | awk '{print $4}')
+                                echo "🌐 Ingress Public IP: $IP"
                             '''
                         } catch (Exception e) {
                             echo "❌ Kubernetes deployment failed: ${e.getMessage()}"
