@@ -194,7 +194,7 @@ pipeline {
                                 # ✅ 杀掉之前的 ZAP Java 进程
                                 PID=$(ps aux | grep '[j]ava.*zap' | awk '{print $2}') [ -n "$PID" ] && kill -9 "$PID" || true
 
-                                # ✅ 启动 ZAP Proxy（后台+日志）
+                                # ✅ 启动 ZAP Proxy(后台+日志）
                                 nohup /opt/zap/zap.sh -daemon -host 0.0.0.0 -port 8090 -config api.disablekey=true > /tmp/zap.log 2>&1 &
 
                                 echo "🔄 Waiting for ZAP to be ready..."
