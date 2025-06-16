@@ -11,6 +11,7 @@ GitHub 仓库地址：👉 https://github.com/nxiazhou/capstone_project
 
     docker run -d --name jenkins \
     -p 8080:8080 -p 50000:50000 -p 3000:3000 \
+    -v /var/run/docker.sock:/var/run/docker.sock \
     -v /var/lib/jenkins:/var/jenkins_home \
     -v /root/.kube/config:/root/.kube/config \
     -v /root/docker-jenkins:/root/deploy-yamls \
