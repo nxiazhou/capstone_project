@@ -16,67 +16,6 @@ pipeline {
     }
 
     stages {
-
-        stage('Run Next.js App in Kubernetes') {
-            steps {
-                dir('bulletin-board-next') {
-                    echo '🚀 Starting Kubernetes deployment for Next.js app...'
-                    script {
-                        try {
-                            sh '''
-                                echo "🔐 Logging into ACR..."
-                                docker login crpi-hmkoucghneqevmd4.cn-hangzhou.personal.cr.aliyuncs.com \
-                                    -u "${ACR_USERNAME}" -p "${ACR_PASSWORD}"
-                            '''
-
-                            sh '''
-                                echo "🏗 Building Docker image..."
-                                docker build -t crpi-hmkoucghneqevmd4.cn-hangzhou.personal.cr.aliyuncs.com/dddd_nxz/dddd_platform:latest .
-
-                                echo "📤 Pushing Docker image to ACR..."
-                                docker push crpi-hmkoucghneqevmd4.cn-hangzhou.personal.cr.aliyuncs.com/dddd_nxz/dddd_platform:latest
-                            '''
-
-                            sh '''
-                                echo "🧹 Cleaning old Kubernetes resources..."
-                                eval "$KUBE_CMD delete all --all -n default" || true
-                                eval "$KUBE_CMD delete ingress --all -n default" || true
-                            '''
-
-                            sh '''
-                                echo "📄 Applying Kubernetes manifests..."
-                                eval "$KUBE_CMD apply -f /root/deploy-yamls/next-deploy.yaml"
-                                eval "$KUBE_CMD apply -f /root/deploy-yamls/next-service.yaml"
-                                eval "$KUBE_CMD apply -f /root/deploy-yamls/next-ingress.yaml"
-                            '''
-
-                            sh '''
-                                echo "⏳ Waiting for pod to be Running..."
-                                for i in {1..30}; do
-                                    STATUS=$(eval "$KUBE_CMD get pods -o jsonpath='{.items[0].status.phase}'")
-                                    echo "Current pod status: $STATUS"
-                                    if [ "$STATUS" = "Running" ]; then
-                                        echo "✅ Pod is running."
-                                        break
-                                    fi
-                                    sleep 5
-                                done
-                            '''
-
-                            sh '''
-                                echo "🌐 Fetching ingress public IP..."
-                                IP=$(eval "$KUBE_CMD get svc -n kube-system | grep nginx-ingress-lb" | awk '{print $4}')
-                                echo "🌐 Ingress Public IP: $IP"
-                            '''
-                        } catch (Exception e) {
-                            echo "❌ Kubernetes deployment failed: ${e.getMessage()}"
-                            currentBuild.result = 'FAILURE'
-                            throw e
-                        }
-                    }
-                }
-            }
-        }
         stage('Checkout') {
             steps {
                 echo '📅 Cloning repository...'
@@ -314,13 +253,74 @@ pipeline {
             }
         }
 
+        stage('Run Next.js App in Kubernetes') {
+            steps {
+                dir('bulletin-board-next') {
+                    echo '🚀 Starting Kubernetes deployment for Next.js app...'
+                    script {
+                        try {
+                            sh '''
+                                echo "🔐 Logging into ACR..."
+                                docker login crpi-hmkoucghneqevmd4.cn-hangzhou.personal.cr.aliyuncs.com \
+                                    -u "${ACR_USERNAME}" -p "${ACR_PASSWORD}"
+                            '''
+
+                            sh '''
+                                echo "🏗 Building Docker image..."
+                                docker build -t crpi-hmkoucghneqevmd4.cn-hangzhou.personal.cr.aliyuncs.com/dddd_nxz/dddd_platform:latest .
+
+                                echo "📤 Pushing Docker image to ACR..."
+                                docker push crpi-hmkoucghneqevmd4.cn-hangzhou.personal.cr.aliyuncs.com/dddd_nxz/dddd_platform:latest
+                            '''
+
+                            sh '''
+                                echo "🧹 Cleaning old Kubernetes resources..."
+                                eval "$KUBE_CMD delete all --all -n default" || true
+                                eval "$KUBE_CMD delete ingress --all -n default" || true
+                            '''
+
+                            sh '''
+                                echo "📄 Applying Kubernetes manifests..."
+                                eval "$KUBE_CMD apply -f /root/deploy-yamls/next-deploy.yaml"
+                                eval "$KUBE_CMD apply -f /root/deploy-yamls/next-service.yaml"
+                                eval "$KUBE_CMD apply -f /root/deploy-yamls/next-ingress.yaml"
+                            '''
+
+                            sh '''
+                                echo "⏳ Waiting for pod to be Running..."
+                                for i in {1..30}; do
+                                    STATUS=$(eval "$KUBE_CMD get pods -o jsonpath='{.items[0].status.phase}'")
+                                    echo "Current pod status: $STATUS"
+                                    if [ "$STATUS" = "Running" ]; then
+                                        echo "✅ Pod is running."
+                                        break
+                                    fi
+                                    sleep 5
+                                done
+                            '''
+
+                            sh '''
+                                echo "🌐 Fetching ingress public IP..."
+                                IP=$(eval "$KUBE_CMD get svc -n kube-system | grep nginx-ingress-lb" | awk '{print $4}')
+                                echo "🌐 Ingress Public IP(in Kubernetes for production): $IP"
+                            '''
+                        } catch (Exception e) {
+                            echo "❌ Kubernetes deployment failed: ${e.getMessage()}"
+                            currentBuild.result = 'FAILURE'
+                            throw e
+                        }
+                    }
+                }
+            }
+        }
+
         stage('Get ECS Public IP') {
             steps {
                 echo '🌐 Getting ECS public IP...'
                 script {
                     def publicIp = sh(script: "curl -s ifconfig.me", returnStdout: true).trim()
                     def url = publicIp + ":3000"
-                    echo "The URL with port is: ${url}"
+                    echo "The URL with port is(Aliyun ECS ubuntu instance for development): ${url}"
                 }
             }
         }
