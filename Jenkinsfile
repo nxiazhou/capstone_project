@@ -272,6 +272,7 @@ pipeline {
         //                     sh '''
         //                         echo "🏗 Building Docker image..."
         //                         docker build -t crpi-hmkoucghneqevmd4.cn-hangzhou.personal.cr.aliyuncs.com/dddd_nxz/dddd_platform:latest .
+        //                         docker image prune -f
 
         //                         echo "📤 Pushing Docker image to ACR..."
         //                         docker push crpi-hmkoucghneqevmd4.cn-hangzhou.personal.cr.aliyuncs.com/dddd_nxz/dddd_platform:latest
