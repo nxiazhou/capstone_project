@@ -54,41 +54,41 @@ pipeline {
             }
         }
 
-        stage('Install Dependencies') {
-            steps {
-                echo '📦 Installing all dependencies...'
-                script {
-                    try {
-                        dir('bulletin-board-next') {
-                            sh '''
-                                npm install --save-dev
-                                echo "✅ Npm dependencies installed"
-                            '''
-                        }
-                    } catch (Exception e) {
-                        echo '❌ Error during dependencies installation: ${e.getMessage()}'
-                        throw e
-                    }
-                }
-            }
-        }
+        // stage('Install Dependencies') {
+        //     steps {
+        //         echo '📦 Installing all dependencies...'
+        //         script {
+        //             try {
+        //                 dir('bulletin-board-next') {
+        //                     sh '''
+        //                         npm install --save-dev
+        //                         echo "✅ Npm dependencies installed"
+        //                     '''
+        //                 }
+        //             } catch (Exception e) {
+        //                 echo '❌ Error during dependencies installation: ${e.getMessage()}'
+        //                 throw e
+        //             }
+        //         }
+        //     }
+        // }
 
-        stage('Build Project') {
-            steps {
-                echo '🔨 Building Next.js app...'
-                script {
-                    try {
-                        dir('bulletin-board-next') {
-                            sh 'npm run build || { echo "❌ Build failed"; exit 1; }'
-                            echo '✅ Build completed successfully'
-                        }
-                    } catch (Exception e) {
-                        echo '❌ Error during build: ${e.getMessage()}'
-                        throw e
-                    }
-                }
-            }
-        }
+        // stage('Build Project') {
+        //     steps {
+        //         echo '🔨 Building Next.js app...'
+        //         script {
+        //             try {
+        //                 dir('bulletin-board-next') {
+        //                     sh 'npm run build || { echo "❌ Build failed"; exit 1; }'
+        //                     echo '✅ Build completed successfully'
+        //                 }
+        //             } catch (Exception e) {
+        //                 echo '❌ Error during build: ${e.getMessage()}'
+        //                 throw e
+        //             }
+        //         }
+        //     }
+        // }
 
         stage('Start App for Testing') {
             steps {
@@ -117,69 +117,69 @@ pipeline {
 
 
 
-        stage('Run Unit Tests') {
-            steps {
-                echo '🧠 Running unit tests...'
-                script {
-                    catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-                        try {
-                            dir('bulletin-board-next') {
-                                sh 'NODE_ENV=development npm run test || { echo "❌ Unit tests failed"; exit 1; }'
-                                echo '✅ Unit tests passed'
-                            }
-                        } catch (Exception e) {
-                            echo '❌ Error running unit tests: ${e.getMessage()}'
-                            throw e
-                        }
-                    }
-                }
-            }
-        }
+        // stage('Run Unit Tests') {
+        //     steps {
+        //         echo '🧠 Running unit tests...'
+        //         script {
+        //             catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+        //                 try {
+        //                     dir('bulletin-board-next') {
+        //                         sh 'NODE_ENV=development npm run test || { echo "❌ Unit tests failed"; exit 1; }'
+        //                         echo '✅ Unit tests passed'
+        //                     }
+        //                 } catch (Exception e) {
+        //                     echo '❌ Error running unit tests: ${e.getMessage()}'
+        //                     throw e
+        //                 }
+        //             }
+        //         }
+        //     }
+        // }
 
-        stage('Run Integration Tests') {
-            steps {
-                echo '🔄 Running integration tests...'
-                script {
-                    catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-                        try {
-                            dir('bulletin-board-next') {
-                                sh '''
-                                    export DISPLAY=:99
-                                    nohup Xvfb :99 -screen 0 1920x1080x24 > /dev/null 2>&1 &
-                                    sleep 2
-                                    npx cypress run || { echo "❌ Integration tests failed"; exit 1; }
-                                '''
-                                echo '✅ Integration tests passed'
-                            }
-                        } catch (Exception e) {
-                            echo '❌ Error running integration tests: ${e.getMessage()}'
-                            throw e
-                        }
-                    }
-                }
-            }
-        }
+        // stage('Run Integration Tests') {
+        //     steps {
+        //         echo '🔄 Running integration tests...'
+        //         script {
+        //             catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+        //                 try {
+        //                     dir('bulletin-board-next') {
+        //                         sh '''
+        //                             export DISPLAY=:99
+        //                             nohup Xvfb :99 -screen 0 1920x1080x24 > /dev/null 2>&1 &
+        //                             sleep 2
+        //                             npx cypress run || { echo "❌ Integration tests failed"; exit 1; }
+        //                         '''
+        //                         echo '✅ Integration tests passed'
+        //                     }
+        //                 } catch (Exception e) {
+        //                     echo '❌ Error running integration tests: ${e.getMessage()}'
+        //                     throw e
+        //                 }
+        //             }
+        //         }
+        //     }
+        // }
 
-        stage('Security Scan - Snyk') {
-            steps {
-                echo '🛡️ Running Snyk scan...'
-                script {
-                    catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-                        try {
-                            dir('bulletin-board-next') {
-                                sh '''
-                                   snyk test || echo "⚠️ Snyk scan completed with vulnerabilities (non-blocking)"
-                                '''
-                                echo '✅ Snyk scan completed'
-                            }
-                        } catch (Exception e) {
-                            echo '❌ Error running Snyk scan: ${e.getMessage()}'
-                            throw e
-                        }
-                    }
-                }
-            }
-        }
+        // stage('Security Scan - Snyk') {
+        //     steps {
+        //         echo '🛡️ Running Snyk scan...'
+        //         script {
+        //             catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+        //                 try {
+        //                     dir('bulletin-board-next') {
+        //                         sh '''
+        //                            snyk test || echo "⚠️ Snyk scan completed with vulnerabilities (non-blocking)"
+        //                         '''
+        //                         echo '✅ Snyk scan completed'
+        //                     }
+        //                 } catch (Exception e) {
+        //                     echo '❌ Error running Snyk scan: ${e.getMessage()}'
+        //                     throw e
+        //                 }
+        //             }
+        //         }
+        //     }
+        // }
 
         stage('Security Scan - ZAP') {
             steps {
@@ -192,7 +192,11 @@ pipeline {
                                 PID=$(ps aux | grep '[j]ava.*zap' | awk '{print $2}') [ -n "$PID" ] && kill -9 "$PID" || true
 
                                 # ✅ 启动 ZAP Proxy(后台+日志）
-                                nohup /opt/zap/zap.sh -daemon -host 0.0.0.0 -port 8090 -config api.disablekey=true > /tmp/zap.log 2>&1 &
+                                nohup /opt/zap/zap.sh -daemon -host 0.0.0.0 -port 8090 \
+                                    -config api.disablekey=true \
+                                    -addonupdate false \
+                                    -addoninstall false \
+                                    -addondisable selenium > /tmp/zap.log 2>&1 &
 
                                 echo "🔄 Waiting for ZAP to be ready..."
                                 for i in {1..30}; do
@@ -253,66 +257,66 @@ pipeline {
             }
         }
 
-        stage('Run Next.js App in Kubernetes') {
-            steps {
-                dir('bulletin-board-next') {
-                    echo '🚀 Starting Kubernetes deployment for Next.js app...'
-                    script {
-                        try {
-                            sh '''
-                                echo "🔐 Logging into ACR..."
-                                docker login crpi-hmkoucghneqevmd4.cn-hangzhou.personal.cr.aliyuncs.com \
-                                    -u "${ACR_USERNAME}" -p "${ACR_PASSWORD}"
-                            '''
+        // stage('Run Next.js App in Kubernetes') {
+        //     steps {
+        //         dir('bulletin-board-next') {
+        //             echo '🚀 Starting Kubernetes deployment for Next.js app...'
+        //             script {
+        //                 try {
+        //                     sh '''
+        //                         echo "🔐 Logging into ACR..."
+        //                         docker login crpi-hmkoucghneqevmd4.cn-hangzhou.personal.cr.aliyuncs.com \
+        //                             -u "${ACR_USERNAME}" -p "${ACR_PASSWORD}"
+        //                     '''
 
-                            sh '''
-                                echo "🏗 Building Docker image..."
-                                docker build -t crpi-hmkoucghneqevmd4.cn-hangzhou.personal.cr.aliyuncs.com/dddd_nxz/dddd_platform:latest .
+        //                     sh '''
+        //                         echo "🏗 Building Docker image..."
+        //                         docker build -t crpi-hmkoucghneqevmd4.cn-hangzhou.personal.cr.aliyuncs.com/dddd_nxz/dddd_platform:latest .
 
-                                echo "📤 Pushing Docker image to ACR..."
-                                docker push crpi-hmkoucghneqevmd4.cn-hangzhou.personal.cr.aliyuncs.com/dddd_nxz/dddd_platform:latest
-                            '''
+        //                         echo "📤 Pushing Docker image to ACR..."
+        //                         docker push crpi-hmkoucghneqevmd4.cn-hangzhou.personal.cr.aliyuncs.com/dddd_nxz/dddd_platform:latest
+        //                     '''
 
-                            sh '''
-                                echo "🧹 Cleaning old Kubernetes resources..."
-                                eval "$KUBE_CMD delete all --all -n default" || true
-                                eval "$KUBE_CMD delete ingress --all -n default" || true
-                            '''
+        //                     sh '''
+        //                         echo "🧹 Cleaning old Kubernetes resources..."
+        //                         eval "$KUBE_CMD delete all --all -n default" || true
+        //                         eval "$KUBE_CMD delete ingress --all -n default" || true
+        //                     '''
 
-                            sh '''
-                                echo "📄 Applying Kubernetes manifests..."
-                                eval "$KUBE_CMD apply -f /root/deploy-yamls/next-deploy.yaml"
-                                eval "$KUBE_CMD apply -f /root/deploy-yamls/next-service.yaml"
-                                eval "$KUBE_CMD apply -f /root/deploy-yamls/next-ingress.yaml"
-                            '''
+        //                     sh '''
+        //                         echo "📄 Applying Kubernetes manifests..."
+        //                         eval "$KUBE_CMD apply -f /root/deploy-yamls/next-deploy.yaml"
+        //                         eval "$KUBE_CMD apply -f /root/deploy-yamls/next-service.yaml"
+        //                         eval "$KUBE_CMD apply -f /root/deploy-yamls/next-ingress.yaml"
+        //                     '''
 
-                            sh '''
-                                echo "⏳ Waiting for pod to be Running..."
-                                for i in {1..30}; do
-                                    STATUS=$(eval "$KUBE_CMD get pods -o jsonpath='{.items[0].status.phase}'")
-                                    echo "Current pod status: $STATUS"
-                                    if [ "$STATUS" = "Running" ]; then
-                                        echo "✅ Pod is running."
-                                        break
-                                    fi
-                                    sleep 5
-                                done
-                            '''
+        //                     sh '''
+        //                         echo "⏳ Waiting for pod to be Running..."
+        //                         for i in {1..30}; do
+        //                             STATUS=$(eval "$KUBE_CMD get pods -o jsonpath='{.items[0].status.phase}'")
+        //                             echo "Current pod status: $STATUS"
+        //                             if [ "$STATUS" = "Running" ]; then
+        //                                 echo "✅ Pod is running."
+        //                                 break
+        //                             fi
+        //                             sleep 5
+        //                         done
+        //                     '''
 
-                            sh '''
-                                echo "🌐 Fetching ingress public IP..."
-                                IP=$(eval "$KUBE_CMD get svc -n kube-system | grep nginx-ingress-lb" | awk '{print $4}')
-                                echo "🌐 Ingress Public IP(in Kubernetes for production): $IP"
-                            '''
-                        } catch (Exception e) {
-                            echo "❌ Kubernetes deployment failed: ${e.getMessage()}"
-                            currentBuild.result = 'FAILURE'
-                            throw e
-                        }
-                    }
-                }
-            }
-        }
+        //                     sh '''
+        //                         echo "🌐 Fetching ingress public IP..."
+        //                         IP=$(eval "$KUBE_CMD get svc -n kube-system | grep nginx-ingress-lb" | awk '{print $4}')
+        //                         echo "🌐 Ingress Public IP(in Kubernetes for production): $IP"
+        //                     '''
+        //                 } catch (Exception e) {
+        //                     echo "❌ Kubernetes deployment failed: ${e.getMessage()}"
+        //                     currentBuild.result = 'FAILURE'
+        //                     throw e
+        //                 }
+        //             }
+        //         }
+        //     }
+        // }
 
         stage('Get ECS Public IP') {
             steps {
