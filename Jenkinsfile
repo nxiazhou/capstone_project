@@ -206,19 +206,18 @@ pipeline {
                             -config api.addrs.addr.name=.* \
                             > /tmp/zap.log 2>&1 &
 
-                        echo "🌐 Waiting for ZAP API to become available..."
-                        ZAP_READY=0
+                        echo "🌐 Waiting for ZAP to be ready (log-based)..."
                         for i in {1..30}; do
-                            if curl -s http://localhost:8090/JSON/core/view/version/ | grep -q "version"; then
-                                echo "✅ ZAP API is responsive"
-                                ZAP_READY=1
+                            if grep -q "ZAP is now listening on" /tmp/zap.log; then
+                                echo "✅ ZAP is ready (log detected)"
                                 break
                             fi
                             sleep 2
                         done
 
-                        if [ "$ZAP_READY" = "0" ]; then
-                            echo "❌ ZAP API did not respond in time. Dumping log:"
+                        # 再次确认 curl 通不通
+                        if ! curl -s http://localhost:8090/JSON/core/view/version/ | grep -q "version"; then
+                            echo "❌ ZAP API not responsive after startup"
                             tail -n 100 /tmp/zap.log
                             exit 1
                         fi
