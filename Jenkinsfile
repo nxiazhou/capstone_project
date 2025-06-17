@@ -192,40 +192,33 @@ pipeline {
                         rm -f /tmp/zap.log
 
                         echo "🚀 Starting ZAP in background..."
-                        (
-                            nohup /opt/zap/zap.sh -daemon -host 0.0.0.0 -port 8090 > /tmp/zap.log 2>&1 &
+                        nohup java -jar /opt/zap/zap-2.16.1.jar \
+                            -daemon \
+                            -host 0.0.0.0 \
+                            -port 8090 \
+                            -config api.disablekey=true \
+                            -config api.addrs.addr.name=0.0.0.0 \
+                            -config api.addrs.addr.regex=true \
+                            -addondisable selenium \
+                            -addondisable client \
+                            -addondisable hud \
+                            > /tmp/zap.log 2>&1 &
 
-                            echo "⏳ Waiting for ZAP to be ready in logs..."
-                            for i in {1..60}; do
-                                if grep -q "ZAP 2.* started" /tmp/zap.log; then
-                                echo "✅ ZAP reported startup in logs"
-                                break
-                                fi
-                                sleep 2
-                            done
-
-                            if ! grep -q "ZAP 2.* started" /tmp/zap.log; then
-                                echo "❌ ZAP did not start within timeout. Dumping log:"
-                                tail -n 100 /tmp/zap.log
-                                exit 1
-                            fi
-                        )
-
-                        echo "🌐 Verifying ZAP API availability..."
-                        API_READY=0
+                        echo "🌐 Waiting for ZAP API to become available..."
+                        ZAP_READY=0
                         for i in {1..30}; do
-                        if curl -s http://localhost:8090/JSON/core/view/version/ | grep -q "version"; then
-                            echo "✅ ZAP API is responsive"
-                            API_READY=1
-                            break
-                        fi
-                        sleep 2
+                            if curl -s http://localhost:8090/JSON/core/view/version/ | grep -q "version"; then
+                                echo "✅ ZAP API is responsive"
+                                ZAP_READY=1
+                                break
+                            fi
+                            sleep 2
                         done
 
-                        if [ "$API_READY" = "0" ]; then
-                        echo "❌ ZAP API not responding. Dumping log:"
-                        tail -n 100 /tmp/zap.log
-                        exit 1
+                        if [ "$ZAP_READY" = "0" ]; then
+                            echo "❌ ZAP API did not respond in time. Dumping log:"
+                            tail -n 100 /tmp/zap.log
+                            exit 1
                         fi
 
                         # ================= Spider ==================
