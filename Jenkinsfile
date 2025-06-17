@@ -184,24 +184,26 @@ pipeline {
                     try {
                     sh '''
                         echo "🧹 Killing old ZAP..."
-                        PID=$(ps aux | grep '[j]ava.*zap' | awk '{print $2}')
-                        [ -n "$PID" ] && kill -9 "$PID" && echo "✅ Killed ZAP process $PID" || echo "⚠️ No ZAP process found"
+                        PIDS=$(ps aux | grep '[j]ava.*zap' | awk '{print $2}')
+                        if [ -n "$PIDS" ]; then
+                            echo "🧹 Killing ZAP processes: $PIDS"
+                            for PID in $PIDS; do
+                                kill -9 "$PID" && echo "✅ Killed ZAP process $PID"
+                            done
+                        else
+                            echo "⚠️ No ZAP process found"
+                        fi
 
                         echo "🧹 Cleaning old logs and session..."
                         rm -rf /root/.ZAP/
                         rm -f /tmp/zap.log
 
                         echo "🚀 Starting ZAP in background..."
-                        nohup java -jar /opt/zap/zap-2.16.1.jar \
-                            -daemon \
+                        /opt/zap/zap.sh -daemon \
                             -host 0.0.0.0 \
                             -port 8090 \
                             -config api.disablekey=true \
-                            -config api.addrs.addr.name=0.0.0.0 \
-                            -config api.addrs.addr.regex=true \
-                            -addondisable selenium \
-                            -addondisable client \
-                            -addondisable hud \
+                            -config api.addrs.addr.name=.* \
                             > /tmp/zap.log 2>&1 &
 
                         echo "🌐 Waiting for ZAP API to become available..."

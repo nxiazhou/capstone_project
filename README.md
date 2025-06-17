@@ -365,8 +365,12 @@ npm run dev
 
 - 本项目已配置 `.babelrc` 使用 `"runtime": "automatic"`，支持 **JSX 自动引入 React**，无需每个页面写 `import React from 'react'`。
 
+## 3.Zaproxy
 
-## Kubernetes 配置
+检查端口占用:
+
+    netstat -tulnp | grep 8090
+## 4.Kubernetes 配置
 登录:
 
     docker login crpi-hmkoucghneqevmd4.cn-hangzhou.personal.cr.aliyuncs.com
