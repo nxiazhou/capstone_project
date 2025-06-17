@@ -429,4 +429,8 @@ npm run dev
 
 查看ip地址:
 
-    kubectl get svc -n kube-system | grep nginx-ingress-lb
+    kubectl get svc next-frontend-service -n default -o jsonpath='{.status.loadBalancer.ingress[0].ip}'
+
+删除load_balancer:
+
+    /root/deploy-yamls/delete_public_ingress.sh
