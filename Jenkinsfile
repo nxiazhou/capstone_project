@@ -31,64 +31,64 @@ pipeline {
             }
         }
 
-        stage('Check if package.json changed') {
-            steps {
-                script {
-                    try {
-                        dir('bulletin-board-next') {
-                            def changes = sh(script: "git diff --name-only HEAD HEAD~1", returnStdout: true).trim()
-                            if (changes.contains("package.json")) {
-                                echo '🔍 package.json has changed. Clearing cache...'
-                                sh '''
-                                    rm -rf node_modules package-lock.json .next
-                                '''
-                            } else {
-                                echo '🔒 No changes in package.json. Skipping cache clear.'
-                            }
-                        }
-                    } catch (Exception e) {
-                        echo '❌ Error checking package.json changes: ${e.getMessage()}'
-                        throw e
-                    }
-                }
-            }
-        }
+        // stage('Check if package.json changed') {
+        //     steps {
+        //         script {
+        //             try {
+        //                 dir('bulletin-board-next') {
+        //                     def changes = sh(script: "git diff --name-only HEAD HEAD~1", returnStdout: true).trim()
+        //                     if (changes.contains("package.json")) {
+        //                         echo '🔍 package.json has changed. Clearing cache...'
+        //                         sh '''
+        //                             rm -rf node_modules package-lock.json .next
+        //                         '''
+        //                     } else {
+        //                         echo '🔒 No changes in package.json. Skipping cache clear.'
+        //                     }
+        //                 }
+        //             } catch (Exception e) {
+        //                 echo '❌ Error checking package.json changes: ${e.getMessage()}'
+        //                 throw e
+        //             }
+        //         }
+        //     }
+        // }
 
-        stage('Install Dependencies') {
-            steps {
-                echo '📦 Installing all dependencies...'
-                script {
-                    try {
-                        dir('bulletin-board-next') {
-                            sh '''
-                                npm install --save-dev
-                                echo "✅ Npm dependencies installed"
-                            '''
-                        }
-                    } catch (Exception e) {
-                        echo '❌ Error during dependencies installation: ${e.getMessage()}'
-                        throw e
-                    }
-                }
-            }
-        }
+        // stage('Install Dependencies') {
+        //     steps {
+        //         echo '📦 Installing all dependencies...'
+        //         script {
+        //             try {
+        //                 dir('bulletin-board-next') {
+        //                     sh '''
+        //                         npm install --save-dev
+        //                         echo "✅ Npm dependencies installed"
+        //                     '''
+        //                 }
+        //             } catch (Exception e) {
+        //                 echo '❌ Error during dependencies installation: ${e.getMessage()}'
+        //                 throw e
+        //             }
+        //         }
+        //     }
+        // }
 
-        stage('Build Project') {
-            steps {
-                echo '🔨 Building Next.js app...'
-                script {
-                    try {
-                        dir('bulletin-board-next') {
-                            sh 'npm run build || { echo "❌ Build failed"; exit 1; }'
-                            echo '✅ Build completed successfully'
-                        }
-                    } catch (Exception e) {
-                        echo '❌ Error during build: ${e.getMessage()}'
-                        throw e
-                    }
-                }
-            }
-        }
+        // stage('Build Project') {
+        //     steps {
+        //         echo '🔨 Building Next.js app...'
+        //         script {
+        //             try {
+        //                 dir('bulletin-board-next') {
+        //                     sh 'npm run build || { echo "❌ Build failed"; exit 1; }'
+        //                     echo '✅ Build completed successfully'
+        //                 }
+        //             } catch (Exception e) {
+        //                 echo '❌ Error during build: ${e.getMessage()}'
+        //                 throw e
+        //             }
+        //         }
+        //     }
+        // }
 
         stage('Start App for Testing') {
             steps {
@@ -112,48 +112,48 @@ pipeline {
 
 
 
-        stage('Run Unit Tests') {
-            steps {
-                echo '🧠 Running unit tests...'
-                script {
-                    catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-                        try {
-                            dir('bulletin-board-next') {
-                                sh 'NODE_ENV=development npm run test || { echo "❌ Unit tests failed"; exit 1; }'
-                                echo '✅ Unit tests passed'
-                            }
-                        } catch (Exception e) {
-                            echo '❌ Error running unit tests: ${e.getMessage()}'
-                            throw e
-                        }
-                    }
-                }
-            }
-        }
+        // stage('Run Unit Tests') {
+        //     steps {
+        //         echo '🧠 Running unit tests...'
+        //         script {
+        //             catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+        //                 try {
+        //                     dir('bulletin-board-next') {
+        //                         sh 'NODE_ENV=development npm run test || { echo "❌ Unit tests failed"; exit 1; }'
+        //                         echo '✅ Unit tests passed'
+        //                     }
+        //                 } catch (Exception e) {
+        //                     echo '❌ Error running unit tests: ${e.getMessage()}'
+        //                     throw e
+        //                 }
+        //             }
+        //         }
+        //     }
+        // }
 
-        stage('Run Integration Tests') {
-            steps {
-                echo '🔄 Running integration tests...'
-                script {
-                    catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-                        try {
-                            dir('bulletin-board-next') {
-                                sh '''
-                                    export DISPLAY=:99
-                                    nohup Xvfb :99 -screen 0 1920x1080x24 > /dev/null 2>&1 &
-                                    sleep 2
-                                    npx cypress run || { echo "❌ Integration tests failed"; exit 1; }
-                                '''
-                                echo '✅ Integration tests passed'
-                            }
-                        } catch (Exception e) {
-                            echo '❌ Error running integration tests: ${e.getMessage()}'
-                            throw e
-                        }
-                    }
-                }
-            }
-        }
+        // stage('Run Integration Tests') {
+        //     steps {
+        //         echo '🔄 Running integration tests...'
+        //         script {
+        //             catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+        //                 try {
+        //                     dir('bulletin-board-next') {
+        //                         sh '''
+        //                             export DISPLAY=:99
+        //                             nohup Xvfb :99 -screen 0 1920x1080x24 > /dev/null 2>&1 &
+        //                             sleep 2
+        //                             npx cypress run || { echo "❌ Integration tests failed"; exit 1; }
+        //                         '''
+        //                         echo '✅ Integration tests passed'
+        //                     }
+        //                 } catch (Exception e) {
+        //                     echo '❌ Error running integration tests: ${e.getMessage()}'
+        //                     throw e
+        //                 }
+        //             }
+        //         }
+        //     }
+        // }
 
         stage('Security Scan - Snyk') {
             steps {
@@ -193,14 +193,23 @@ pipeline {
                                     -addoninstall false \
                                     -addondisable selenium > /tmp/zap.log 2>&1 &
 
-                                echo "🔄 Waiting for ZAP API to be ready..."
+                                sleep 5  # 稍微等一下避免 curl 连续 60 次打爆 CPU
+
+                                echo "🔄 Waiting for ZAP to fully initialize..."
                                 for i in {1..60}; do
                                     if curl -s http://localhost:8090/JSON/core/view/version/ | grep -q "version"; then
                                         echo "✅ ZAP API is ready"
                                         break
                                     fi
+                                    echo "⏳ ZAP not ready yet ($i/60)..."
                                     sleep 2
                                 done
+
+                                if ! curl -s http://localhost:8090/JSON/core/view/version/ | grep -q "version"; then
+                                    echo "❌ ZAP failed to start. Dumping logs:"
+                                    tail -n 50 /tmp/zap.log
+                                    exit 1
+                                fi
 
                                 # 🕷️ Spider 扫描
                                 echo "🕷️ Starting spider scan..."

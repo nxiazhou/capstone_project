@@ -15,6 +15,7 @@ Jenkins地址:http://47.97.211.83:8080
 前端的运行jenkins命令如下:
 
     docker run -d --name jenkins \
+    --restart=always \
     --dns=8.8.8.8 \
     --add-host=host.docker.internal:host-gateway \
     -p 8080:8080 -p 50000:50000 -p 3000:3000 \
