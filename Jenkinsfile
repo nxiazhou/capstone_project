@@ -236,8 +236,7 @@ pipeline {
 
                                 echo "🔄 Waiting for spider scan to complete..."
                                 while true; do
-                                    STATUS=$(curl -s "http://localhost:8090/JSON/spider/view/status/?scanId=$SPIDER_ID" | sed -n 's/.*"status":"\\{0,1\\}\\([0-9]*\\)\\{0,1\\}".*/\\1/p')
-                                    echo "🔍 Spider progress: ${STATUS}%"
+                                    STATUS=$(curl -s "http://localhost:8090/JSON/spider/view/status/?scanId=$SPIDER_ID" | sed -n 's/.*"status":"\([0-9]*\)".*/\1/p')
                                     if [ "$STATUS" = "100" ]; then break; fi
                                     sleep 2
                                 done
@@ -255,7 +254,7 @@ pipeline {
 
                                 echo "🔄 Waiting for active scan to complete..."
                                 while true; do
-                                    ASTATUS=$(curl -s "http://localhost:8090/JSON/ascan/view/status/?scanId=$ASCAN_ID" | sed -n 's/.*"status":"\\{0,1\\}\\([0-9]*\\)\\{0-1\\}".*/\\1/p')
+                                    ASTATUS=$(curl -s "http://localhost:8090/JSON/ascan/view/status/?scanId=$ASCAN_ID" | sed -n 's/.*"status":"\([0-9]*\)".*/\1/p')
                                     echo "🔥 Active scan progress: ${ASTATUS}%"
                                     if [ "$ASTATUS" = "100" ]; then break; fi
                                     sleep 5
