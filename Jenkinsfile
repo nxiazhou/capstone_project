@@ -341,12 +341,23 @@ pipeline {
 
                             sh '''
                                 echo "🌐 Fetching Next.js Ingress Public IP..."
-                                IP=$(kubectl get svc next-frontend-service -n default -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+                                export KUBECONFIG=/root/.kube/config
+
+                                for i in $(seq 1 30); do
+                                    IP=$(kubectl get svc next-frontend-service -n default -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+                                    if [ -n "$IP" ]; then
+                                        echo "✅ Ingress External IP: $IP"
+                                        echo "🔗 Access your app at: http://$IP"
+                                        break
+                                    else
+                                        echo "⏳ Still waiting for external IP... ($i)"
+                                        sleep 5
+                                    fi
+                                done
+
                                 if [ -z "$IP" ]; then
-                                    echo "❌ No external IP assigned yet. Try again in a few seconds."
-                                else
-                                    echo "✅ Ingress External IP: $IP"
-                                    echo "🔗 Access your app at: http://$IP"
+                                    echo "❌ External IP was not assigned within timeout"
+                                    exit 1
                                 fi
                             '''
                         } catch (Exception e) {
