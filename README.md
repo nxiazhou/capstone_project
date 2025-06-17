@@ -6,6 +6,11 @@ GitHub 仓库地址：👉 https://github.com/nxiazhou/capstone_project
 
 新前端地址:http://47.97.211.83:3000/login
 
+Kubernetes前端地址:http://120.26.162.244/
+
+Jenkins地址:http://47.97.211.83:8080
+
+    username:dddd    password:Dddd2025
 
 前端的运行jenkins命令如下:
 

@@ -244,7 +244,7 @@ pipeline {
                                     ASTATUS=$(curl -s "http://localhost:8090/JSON/ascan/view/status/?scanId=$ASCAN_ID" | sed -n 's/.*"status":"\\([0-9]*\\)".*/\\1/p')
                                     echo "🔥 Active scan progress: ${ASTATUS}%"
                                     if [ "$ASTATUS" = "100" ]; then break; fi
-                                    sleep 2
+                                    sleep 5
                                 done
                             '''
                             echo '✅ ZAP scan completed'
