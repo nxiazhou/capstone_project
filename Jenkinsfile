@@ -193,11 +193,7 @@ pipeline {
 
                         echo "🚀 Starting ZAP in background..."
                         (
-                            nohup /opt/zap/zap.sh -daemon -host 0.0.0.0 -port 8090 \
-                                -config api.disablekey=true \
-                                -addonupdate false \
-                                -addoninstall false \
-                                -addondisable selenium > /tmp/zap.log 2>&1 &
+                            nohup /opt/zap/zap.sh -daemon -host 0.0.0.0 -port 8090 > /tmp/zap.log 2>&1 &
 
                             echo "⏳ Waiting for ZAP to be ready in logs..."
                             for i in {1..60}; do
