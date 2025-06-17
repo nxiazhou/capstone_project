@@ -193,29 +193,27 @@ pipeline {
 
                         echo "🚀 Starting ZAP in background..."
                         (
-                        nohup /opt/zap/zap.sh -daemon -host 0.0.0.0 -port 8090 \
-                            -config api.disablekey=true \
-                            -addonupdate false \
-                            -addoninstall false \
-                            -addondisable selenium > /tmp/zap.log 2>&1 &
+                            nohup /opt/zap/zap.sh -daemon -host 0.0.0.0 -port 8090 \
+                                -config api.disablekey=true \
+                                -addonupdate false \
+                                -addoninstall false \
+                                -addondisable selenium > /tmp/zap.log 2>&1 &
+
+                            echo "⏳ Waiting for ZAP to be ready in logs..."
+                            for i in {1..60}; do
+                                if grep -q "ZAP 2.* started" /tmp/zap.log; then
+                                echo "✅ ZAP reported startup in logs"
+                                break
+                                fi
+                                sleep 2
+                            done
+
+                            if ! grep -q "ZAP 2.* started" /tmp/zap.log; then
+                                echo "❌ ZAP did not start within timeout. Dumping log:"
+                                tail -n 100 /tmp/zap.log
+                                exit 1
+                            fi
                         )
-
-                        echo "⏳ Waiting for ZAP to be ready in logs..."
-                        ZAP_STARTED=0
-                        for i in {1..60}; do
-                        if grep -q "ZAP 2.* started" /tmp/zap.log; then
-                            echo "✅ ZAP reported startup in logs"
-                            ZAP_STARTED=1
-                            break
-                        fi
-                        sleep 2
-                        done
-
-                        if [ "$ZAP_STARTED" = "0" ]; then
-                        echo "❌ ZAP did not start within timeout. Dumping log:"
-                        tail -n 100 /tmp/zap.log
-                        exit 1
-                        fi
 
                         echo "🌐 Verifying ZAP API availability..."
                         API_READY=0
