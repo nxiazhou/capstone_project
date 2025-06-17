@@ -183,8 +183,10 @@ pipeline {
                     catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
                         try {
                             sh '''
+                                # ps aux | grep '[j]ava.*zap'
                                 # ✅ 杀掉之前的 ZAP Java 进程
-                                PID=$(ps aux | grep '[j]ava.*zap' | awk '{print $2}') [ -n "$PID" ] && kill -9 "$PID" || true
+                                PID=$(ps aux | grep '[j]ava.*zap' | awk '{print $2}')
+                                [ -n "$PID" ] && kill -9 "$PID" && echo "✅ Killed ZAP process $PID" || echo "⚠️ No ZAP process found"
 
                                 # ✅ 启动 ZAP Proxy(后台+日志）
                                 nohup /opt/zap/zap.sh -daemon -host 0.0.0.0 -port 8090 \
@@ -193,10 +195,10 @@ pipeline {
                                     -addoninstall false \
                                     -addondisable selenium > /tmp/zap.log 2>&1 &
 
-                                sleep 5  # 稍微等一下避免 curl 连续 60 次打爆 CPU
+                                sleep 5  # 稍微等一下避免 curl 连续 90 次打爆 CPU
 
                                 echo "🔄 Waiting for ZAP to fully initialize..."
-                                for i in {1..60}; do
+                                for i in {1..90}; do
                                     if curl -s http://localhost:8090/JSON/core/view/version/ | grep -q "version"; then
                                         echo "✅ ZAP API is ready"
                                         break
