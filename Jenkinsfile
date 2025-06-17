@@ -180,93 +180,88 @@ pipeline {
             steps {
                 echo '🕷️ Running ZAP scan...'
                 script {
-                    catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-                        try {
-                            sh '''
-                                # ps aux | grep '[j]ava.*zap'
-                                # ✅ 杀掉之前的 ZAP Java 进程
-                                PID=$(ps aux | grep '[j]ava.*zap' | awk '{print $2}')
-                                [ -n "$PID" ] && kill -9 "$PID" && echo "✅ Killed ZAP process $PID" || echo "⚠️ No ZAP process found"
+                catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                    try {
+                    sh '''
+                        echo "🧹 Killing old ZAP..."
+                        PID=$(ps aux | grep '[j]ava.*zap' | awk '{print $2}')
+                        [ -n "$PID" ] && kill -9 "$PID" && echo "✅ Killed ZAP process $PID" || echo "⚠️ No ZAP process found"
 
-                                # 2. 清空旧日志和旧目录
-                                rm -rf /root/.ZAP/
-                                rm -f /tmp/zap.log
-                                
-                                # 3. 后台启动 ZAP
-                                echo "🚀 Starting ZAP in background..."
-                                nohup /opt/zap/zap.sh -daemon -host 0.0.0.0 -port 8090 \
-                                -config api.disablekey=true \
-                                -addonupdate false \
-                                -addoninstall false \
-                                -addondisable selenium > /tmp/zap.log 2>&1 &
+                        echo "🧹 Cleaning old logs and session..."
+                        rm -rf /root/.ZAP/
+                        rm -f /tmp/zap.log
 
-                                sleep 5  # 稍微等一下避免 curl 连续 90 次打爆 CPU
+                        echo "🚀 Starting ZAP in background..."
+                        nohup /opt/zap/zap.sh -daemon -host 0.0.0.0 -port 8090 \
+                        -config api.disablekey=true \
+                        -addonupdate false \
+                        -addoninstall false \
+                        -addondisable selenium > /tmp/zap.log 2>&1 &
 
-                                echo "⏳ Waiting for ZAP to start..."
-                                ZAP_STARTED=0
-                                for i in {1..60}; do
-                                if netstat -tuln | grep ":8090" > /dev/null; then
-                                    if curl -s http://localhost:8090/JSON/core/view/version/ | grep -q "version"; then
-                                    echo "✅ ZAP API is ready"
-                                    ZAP_STARTED=1
-                                    break
-                                    fi
-                                fi
-                                sleep 2
-                                done
+                        echo "⏳ Waiting for ZAP to be ready..."
+                        for i in {1..60}; do
+                        if grep -q "ZAP 2.* started" /tmp/zap.log; then
+                            echo "✅ ZAP reported startup in logs"
+                            break
+                        fi
+                        sleep 2
+                        done
 
-                                if [ "$ZAP_STARTED" = "0" ]; then
-                                echo "❌ ZAP failed to start. Dumping log:"
-                                tail -n 100 /tmp/zap.log
-                                exit 1
-                                fi
+                        if ! grep -q "ZAP 2.* started" /tmp/zap.log; then
+                        echo "❌ ZAP did not start within timeout. Dumping log:"
+                        tail -n 100 /tmp/zap.log
+                        exit 1
+                        fi
 
-                                # 🕷️ Spider 扫描
-                                echo "🕷️ Starting spider scan..."
-                                SPIDER_RESPONSE=$(curl -s "http://localhost:8090/JSON/spider/action/scan/?url=http://localhost:3000")
-                                echo "📦 Spider response: $SPIDER_RESPONSE"
-                                SPIDER_ID=$(echo "$SPIDER_RESPONSE" | sed -n 's/.*"scan":"\\([0-9]*\\)".*/\\1/p')
-                                echo "📦 Spider id: $SPIDER_ID"
+                        echo "🔍 Verifying API availability..."
+                        for i in {1..30}; do
+                        if curl -s http://localhost:8090/JSON/core/view/version/ | grep -q "version"; then
+                            echo "✅ ZAP API is responsive"
+                            break
+                        fi
+                        sleep 2
+                        done
 
-                                if [ -z "$SPIDER_ID" ]; then
-                                    echo "❌ Failed to get Spider ID"
-                                    exit 1
-                                fi
+                        echo "🕷️ Starting spider scan..."
+                        SPIDER_RESPONSE=$(curl -s "http://localhost:8090/JSON/spider/action/scan/?url=http://localhost:3000")
+                        SPIDER_ID=$(echo "$SPIDER_RESPONSE" | sed -n 's/.*"scan":"\\([0-9]*\\)".*/\\1/p')
+                        echo "📦 Spider id: $SPIDER_ID"
 
-                                echo "🔄 Waiting for spider scan to complete..."
-                                while true; do
-                                    STATUS=$(curl -s "http://localhost:8090/JSON/spider/view/status/?scanId=$SPIDER_ID" | sed -n 's/.*"status":"\\([0-9]*\\)".*/\\1/p')
-                                    echo "🔍 Spider scan progress: ${STATUS}%"
-                                    if [ "$STATUS" = "100" ]; then break; fi
-                                    sleep 2
-                                done
+                        if [ -z "$SPIDER_ID" ]; then
+                        echo "❌ Failed to get Spider ID"
+                        exit 1
+                        fi
 
-                                # 🧪 Active 扫描
-                                echo "🧪 Starting active scan..."
-                                ASCAN_RESPONSE=$(curl -s "http://localhost:8090/JSON/ascan/action/scan/?url=http://localhost:3000")
-                                echo "📦 Active scan response: $ASCAN_RESPONSE"
-                                ASCAN_ID=$(echo "$ASCAN_RESPONSE" | sed -n 's/.*"scan":"\\([0-9]*\\)".*/\\1/p')
-                                echo "📦 Active scan id: $ASCAN_ID"
+                        while true; do
+                        STATUS=$(curl -s "http://localhost:8090/JSON/spider/view/status/?scanId=$SPIDER_ID" | sed -n 's/.*"status":"\\([0-9]*\\)".*/\\1/p')
+                        echo "🔍 Spider scan progress: ${STATUS}%"
+                        if [ "$STATUS" = "100" ]; then break; fi
+                        sleep 2
+                        done
 
-                                if [ -z "$ASCAN_ID" ]; then
-                                    echo "❌ Failed to get Active Scan ID"
-                                    exit 1
-                                fi
+                        echo "🧪 Starting active scan..."
+                        ASCAN_RESPONSE=$(curl -s "http://localhost:8090/JSON/ascan/action/scan/?url=http://localhost:3000")
+                        ASCAN_ID=$(echo "$ASCAN_RESPONSE" | sed -n 's/.*"scan":"\\([0-9]*\\)".*/\\1/p')
+                        echo "📦 Active scan id: $ASCAN_ID"
 
-                                echo "🔄 Waiting for active scan to complete..."
-                                while true; do
-                                    ASTATUS=$(curl -s "http://localhost:8090/JSON/ascan/view/status/?scanId=$ASCAN_ID" | sed -n 's/.*"status":"\\([0-9]*\\)".*/\\1/p')
-                                    echo "🔥 Active scan progress: ${ASTATUS}%"
-                                    if [ "$ASTATUS" = "100" ]; then break; fi
-                                    sleep 5
-                                done
-                            '''
-                            echo '✅ ZAP scan completed'
-                        } catch (Exception e) {
-                            echo "❌ Error running ZAP scan: ${e.getMessage()}"
-                            throw e
-                        }
+                        if [ -z "$ASCAN_ID" ]; then
+                        echo "❌ Failed to get Active Scan ID"
+                        exit 1
+                        fi
+
+                        while true; do
+                        ASTATUS=$(curl -s "http://localhost:8090/JSON/ascan/view/status/?scanId=$ASCAN_ID" | sed -n 's/.*"status":"\\([0-9]*\\)".*/\\1/p')
+                        echo "🔥 Active scan progress: ${ASTATUS}%"
+                        if [ "$ASTATUS" = "100" ]; then break; fi
+                        sleep 5
+                        done
+                    '''
+                    echo '✅ ZAP scan completed'
+                    } catch (Exception e) {
+                    echo "❌ Error running ZAP scan: ${e.getMessage()}"
+                    throw e
                     }
+                }
                 }
             }
         }
