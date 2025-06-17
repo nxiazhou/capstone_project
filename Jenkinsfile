@@ -188,12 +188,17 @@ pipeline {
                                 PID=$(ps aux | grep '[j]ava.*zap' | awk '{print $2}')
                                 [ -n "$PID" ] && kill -9 "$PID" && echo "✅ Killed ZAP process $PID" || echo "⚠️ No ZAP process found"
 
-                                # ✅ 启动 ZAP Proxy(后台+日志）
+                                # 2. 清空旧日志和旧目录
+                                rm -rf /root/.ZAP/
+                                rm -f /tmp/zap.log
+                                
+                                # 3. 后台启动 ZAP
+                                echo "🚀 Starting ZAP in background..."
                                 nohup /opt/zap/zap.sh -daemon -host 0.0.0.0 -port 8090 \
-                                    -config api.disablekey=true \
-                                    -addonupdate false \
-                                    -addoninstall false \
-                                    -addondisable selenium > /tmp/zap.log 2>&1 &
+                                -config api.disablekey=true \
+                                -addonupdate false \
+                                -addoninstall false \
+                                -addondisable selenium > /tmp/zap.log 2>&1 &
 
                                 sleep 5  # 稍微等一下避免 curl 连续 90 次打爆 CPU
 
