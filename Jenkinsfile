@@ -192,11 +192,13 @@ pipeline {
                         rm -f /tmp/zap.log
 
                         echo "🚀 Starting ZAP in background..."
+                        (
                         nohup /opt/zap/zap.sh -daemon -host 0.0.0.0 -port 8090 \
-                        -config api.disablekey=true \
-                        -addonupdate false \
-                        -addoninstall false \
-                        -addondisable selenium > /tmp/zap.log 2>&1 &
+                            -config api.disablekey=true \
+                            -addonupdate false \
+                            -addoninstall false \
+                            -addondisable selenium > /tmp/zap.log 2>&1 &
+                        )
 
                         echo "⏳ Waiting for ZAP to be ready in logs..."
                         ZAP_STARTED=0
