@@ -122,6 +122,9 @@ pipeline {
                                 pm2 logs next-app --lines 50
                                 exit 1
                             fi
+
+                            echo "💾 Saving PM2 process list"
+                            pm2 save
                         '''
                     }
                 }
