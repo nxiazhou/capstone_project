@@ -96,11 +96,9 @@ pipeline {
                 script {
                     dir('bulletin-board-next') {
                         sh '''
-                            # 删除旧的 pm2 进程（忽略不存在的情况）
-                            pm2 delete next-app || true
-
                             # 使用 pm2 启动新的前端服务
-                            pm2 restart npm --name next-app -- run start
+                            pm2 start npm --name next-app -- run start
+                            pm2 restart next-app || true
 
                             # 打印 pm2 状态
                             pm2 status
