@@ -200,7 +200,17 @@ pipeline {
 
                         echo "🚀 Starting ZAP in background..."
                         /opt/zap/zap.sh -daemon -configfile zap-config.properties > /tmp/zap.log 2>&1 &
-
+                        
+                        echo "🌐 Waiting for zap.log to appear..."
+                        for i in {1..10}; do
+                            if [ -f /tmp/zap.log ]; then
+                                echo "✅ Log file found, proceeding..."
+                                break
+                            fi
+                            echo "⌛ Waiting for zap.log... ($i)"
+                            sleep 1
+                        done
+                        
                         echo "🌐 Waiting for ZAP to be ready (log-based)..."
                         ZAP_READY=0
                         for i in {1..60}; do
