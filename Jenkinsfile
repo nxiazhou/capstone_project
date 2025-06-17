@@ -207,15 +207,25 @@ pipeline {
                             > /tmp/zap.log 2>&1 &
 
                         echo "🌐 Waiting for ZAP to be ready (log-based)..."
+
+                        # 等待 ZAP 日志文件被写入
                         for i in {1..30}; do
-                            if grep -q "ZAP is now listening on" /tmp/zap.log; then
+                            if grep -q "ZAP is now listening" /tmp/zap.log; then
                                 echo "✅ ZAP is ready (log detected)"
                                 break
                             fi
+                            echo "⏳ ZAP not ready yet... ($i)"
                             sleep 2
                         done
 
-                        # 再次确认 curl 通不通
+                        # 如果依然 grep 不到，则说明失败
+                        if ! grep -q "ZAP is now listening" /tmp/zap.log; then
+                            echo "❌ ZAP did not start successfully"
+                            cat /tmp/zap.log
+                            exit 1
+                        fi
+
+                        # 再用 curl 二次确认
                         if ! curl -s http://localhost:8090/JSON/core/view/version/ | grep -q "version"; then
                             echo "❌ ZAP API not responsive after startup"
                             tail -n 100 /tmp/zap.log
