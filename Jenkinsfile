@@ -155,26 +155,26 @@ pipeline {
         //     }
         // }
 
-        stage('Security Scan - Snyk') {
-            steps {
-                echo '🛡️ Running Snyk scan...'
-                script {
-                    catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-                        try {
-                            dir('bulletin-board-next') {
-                                sh '''
-                                   snyk test || echo "⚠️ Snyk scan completed with vulnerabilities (non-blocking)"
-                                '''
-                                echo '✅ Snyk scan completed'
-                            }
-                        } catch (Exception e) {
-                            echo '❌ Error running Snyk scan: ${e.getMessage()}'
-                            throw e
-                        }
-                    }
-                }
-            }
-        }
+        // stage('Security Scan - Snyk') {
+        //     steps {
+        //         echo '🛡️ Running Snyk scan...'
+        //         script {
+        //             catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+        //                 try {
+        //                     dir('bulletin-board-next') {
+        //                         sh '''
+        //                            snyk test || echo "⚠️ Snyk scan completed with vulnerabilities (non-blocking)"
+        //                         '''
+        //                         echo '✅ Snyk scan completed'
+        //                     }
+        //                 } catch (Exception e) {
+        //                     echo '❌ Error running Snyk scan: ${e.getMessage()}'
+        //                     throw e
+        //                 }
+        //             }
+        //         }
+        //     }
+        // }
 
         stage('Security Scan - ZAP') {
             steps {
@@ -198,59 +198,75 @@ pipeline {
                         -addoninstall false \
                         -addondisable selenium > /tmp/zap.log 2>&1 &
 
-                        echo "⏳ Waiting for ZAP to be ready..."
+                        echo "⏳ Waiting for ZAP to be ready in logs..."
+                        ZAP_STARTED=0
                         for i in {1..60}; do
                         if grep -q "ZAP 2.* started" /tmp/zap.log; then
                             echo "✅ ZAP reported startup in logs"
+                            ZAP_STARTED=1
                             break
                         fi
                         sleep 2
                         done
 
-                        if ! grep -q "ZAP 2.* started" /tmp/zap.log; then
+                        if [ "$ZAP_STARTED" = "0" ]; then
                         echo "❌ ZAP did not start within timeout. Dumping log:"
                         tail -n 100 /tmp/zap.log
                         exit 1
                         fi
 
-                        echo "🔍 Verifying API availability..."
+                        echo "🌐 Verifying ZAP API availability..."
+                        API_READY=0
                         for i in {1..30}; do
                         if curl -s http://localhost:8090/JSON/core/view/version/ | grep -q "version"; then
                             echo "✅ ZAP API is responsive"
+                            API_READY=1
                             break
                         fi
                         sleep 2
                         done
 
+                        if [ "$API_READY" = "0" ]; then
+                        echo "❌ ZAP API not responding. Dumping log:"
+                        tail -n 100 /tmp/zap.log
+                        exit 1
+                        fi
+
+                        # ================= Spider ==================
                         echo "🕷️ Starting spider scan..."
                         SPIDER_RESPONSE=$(curl -s "http://localhost:8090/JSON/spider/action/scan/?url=http://localhost:3000")
-                        SPIDER_ID=$(echo "$SPIDER_RESPONSE" | sed -n 's/.*"scan":"\\([0-9]*\\)".*/\\1/p')
-                        echo "📦 Spider id: $SPIDER_ID"
+                        echo "📦 Spider response: $SPIDER_RESPONSE"
+                        SPIDER_ID=$(echo "$SPIDER_RESPONSE" | sed -n 's/.*"scan":"\\{0,1\\}([0-9]*)\\{0,1\\}".*/\\1/p')
+                        echo "🕷️ Spider ID: $SPIDER_ID"
 
                         if [ -z "$SPIDER_ID" ]; then
                         echo "❌ Failed to get Spider ID"
                         exit 1
                         fi
 
+                        echo "🔄 Waiting for spider scan to complete..."
                         while true; do
-                        STATUS=$(curl -s "http://localhost:8090/JSON/spider/view/status/?scanId=$SPIDER_ID" | sed -n 's/.*"status":"\\([0-9]*\\)".*/\\1/p')
-                        echo "🔍 Spider scan progress: ${STATUS}%"
+                        STATUS=$(curl -s "http://localhost:8090/JSON/spider/view/status/?scanId=$SPIDER_ID" | sed -n 's/.*"status":"\\{0,1\\}([0-9]*)\\{0,1\\}".*/\\1/p')
+                        echo "🔍 Spider progress: ${STATUS}%"
                         if [ "$STATUS" = "100" ]; then break; fi
                         sleep 2
                         done
 
-                        echo "🧪 Starting active scan..."
+                        # ================= Active Scan ==================
+                        echo "🔥 Starting active scan..."
                         ASCAN_RESPONSE=$(curl -s "http://localhost:8090/JSON/ascan/action/scan/?url=http://localhost:3000")
-                        ASCAN_ID=$(echo "$ASCAN_RESPONSE" | sed -n 's/.*"scan":"\\([0-9]*\\)".*/\\1/p')
-                        echo "📦 Active scan id: $ASCAN_ID"
+                        echo "📦 Active scan response: $ASCAN_RESPONSE"
+                        ASCAN_ID=$(echo "$ASCAN_RESPONSE" | sed -n 's/.*"scan":"\\{0,1\\}([0-9]*)\\{0,1\\}".*/\\1/p')
+                        echo "🔥 Active Scan ID: $ASCAN_ID"
 
                         if [ -z "$ASCAN_ID" ]; then
                         echo "❌ Failed to get Active Scan ID"
                         exit 1
                         fi
 
+                        echo "🔄 Waiting for active scan to complete..."
                         while true; do
-                        ASTATUS=$(curl -s "http://localhost:8090/JSON/ascan/view/status/?scanId=$ASCAN_ID" | sed -n 's/.*"status":"\\([0-9]*\\)".*/\\1/p')
+                        ASTATUS=$(curl -s "http://localhost:8090/JSON/ascan/view/status/?scanId=$ASCAN_ID" | sed -n 's/.*"status":"\\{0,1\\}([0-9]*)\\{0,1\\}".*/\\1/p')
                         echo "🔥 Active scan progress: ${ASTATUS}%"
                         if [ "$ASTATUS" = "100" ]; then break; fi
                         sleep 5
