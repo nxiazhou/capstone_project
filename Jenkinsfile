@@ -199,7 +199,7 @@ pipeline {
                                     -addondisable selenium > /tmp/zap.log 2>&1 &
 
                                 echo "🔄 Waiting for ZAP API to be ready..."
-                                for i in {1..30}; do
+                                for i in {1..60}; do
                                     if curl -s http://localhost:8090/JSON/core/view/version/ | grep -q "version"; then
                                         echo "✅ ZAP API is ready"
                                         break
