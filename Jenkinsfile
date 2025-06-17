@@ -201,7 +201,10 @@ pipeline {
                                 rm -f /tmp/zap.log
 
                                 echo "🚀 Starting ZAP in background..."
-                                /opt/zap/zap.sh -daemon -host 0.0.0.0 -port 8090 -config api.disablekey=true -config api.addrs.addr.name=.* -config api.addrs.addr.regex=true > /tmp/zap.log 2>&1 &
+                                /opt/zap/zap.sh -daemon -host 0.0.0.0 -port 8090 \
+                                    -config api.disablekey=true \
+                                    -config api.addrs.addr.name=.* \
+                                    -config api.addrs.addr.regex=true > /tmp/zap.log 2>&1 &
 
                                 echo "🌐 Waiting for ZAP to be ready (log-based)..."
                                 ZAP_READY=0
@@ -226,7 +229,7 @@ pipeline {
                                 echo "🕷️ Starting spider scan..."
                                 SPIDER_RESPONSE=$(curl -s "http://localhost:8090/JSON/spider/action/scan/?url=http://localhost:3000")
                                 echo "📦 Spider response: $SPIDER_RESPONSE"
-                                SPIDER_ID=$(echo "$SPIDER_RESPONSE" | sed -n 's/.*"scan":"\\{0,1\\}\\([0-9]*\\)\\{0,1\\}".*/\\1/p')
+                                SPIDER_ID=$(echo "$SPIDER_RESPONSE" | sed -n 's/.*"scan":"\\([0-9]*\\)".*/\\1/p')
                                 echo "🕷️ Spider ID: $SPIDER_ID"
 
                                 if [ -z "$SPIDER_ID" ]; then
@@ -236,7 +239,8 @@ pipeline {
 
                                 echo "🔄 Waiting for spider scan to complete..."
                                 while true; do
-                                    STATUS=$(curl -s "http://localhost:8090/JSON/spider/view/status/?scanId=$SPIDER_ID" | sed -n 's/.*"status":"\([0-9]*\)".*/\1/p')
+                                    STATUS=$(curl -s "http://localhost:8090/JSON/spider/view/status/?scanId=$SPIDER_ID" | sed -n 's/.*"status":"\\([0-9]*\\)".*/\\1/p')
+                                    echo "🔍 Spider progress: ${STATUS}%"
                                     if [ "$STATUS" = "100" ]; then break; fi
                                     sleep 2
                                 done
@@ -244,7 +248,7 @@ pipeline {
                                 echo "🔥 Starting active scan..."
                                 ASCAN_RESPONSE=$(curl -s "http://localhost:8090/JSON/ascan/action/scan/?url=http://localhost:3000")
                                 echo "📦 Active scan response: $ASCAN_RESPONSE"
-                                ASCAN_ID=$(echo "$ASCAN_RESPONSE" | sed -n 's/.*"scan":"\\{0,1\\}\\([0-9]*\\)\\{0,1\\}".*/\\1/p')
+                                ASCAN_ID=$(echo "$ASCAN_RESPONSE" | sed -n 's/.*"scan":"\\([0-9]*\\)".*/\\1/p')
                                 echo "🔥 Active Scan ID: $ASCAN_ID"
 
                                 if [ -z "$ASCAN_ID" ]; then
@@ -254,7 +258,7 @@ pipeline {
 
                                 echo "🔄 Waiting for active scan to complete..."
                                 while true; do
-                                    ASTATUS=$(curl -s "http://localhost:8090/JSON/ascan/view/status/?scanId=$ASCAN_ID" | sed -n 's/.*"status":"\([0-9]*\)".*/\1/p')
+                                    ASTATUS=$(curl -s "http://localhost:8090/JSON/ascan/view/status/?scanId=$ASCAN_ID" | sed -n 's/.*"status":"\\([0-9]*\\)".*/\\1/p')
                                     echo "🔥 Active scan progress: ${ASTATUS}%"
                                     if [ "$ASTATUS" = "100" ]; then break; fi
                                     sleep 5
