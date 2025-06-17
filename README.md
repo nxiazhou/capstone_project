@@ -370,6 +370,29 @@ npm run dev
 检查端口占用:
 
     netstat -tulnp | grep 8090
+
+/opt/zap/zap-config.properties
+
+    # ✅ 启用 API 无需密钥
+    api.disablekey=true
+
+    # ✅ 允许所有来源访问（含本机、容器内外）
+    api.addrs.addr.name=.*
+    api.addrs.addr.regex=true
+
+    # ✅ 禁用 Selenium 相关功能（避免 Firefox 报错）
+    selenium.firefox.driver=disabled
+    ajaxSpider.enabled=false
+    hud.enabled=false
+
+    # ✅ 设置监听端口为 8090（默认是 8080）
+    proxy.port=8090
+
+    # ✅ 设置监听地址为所有 IP（确保容器外能访问）
+    proxy.host=0.0.0.0
+
+    # ✅ 关闭启动时自动更新插件（加快启动）
+    addon.autoupdate=false
 ## 4.Kubernetes 配置
 登录:
 

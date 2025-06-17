@@ -96,14 +96,32 @@ pipeline {
                 script {
                     dir('bulletin-board-next') {
                         sh '''
-                            pm2 delete all
-                            # 使用 pm2 启动新的前端服务
+                            echo "🔁 Checking if PM2 is running"
+                            pm2 ping > /dev/null 2>&1 || pm2 save
+
+                            echo "🧹 Cleaning up old PM2 processes"
+                            pm2 delete next-app || true
+
+                            echo "🚀 Starting Next.js app with PM2"
                             pm2 start npm --name next-app -- run start
 
-                            # 打印 pm2 状态
-                            pm2 status
+                            echo "⏳ Waiting for app to be ready..."
+                            i=1
+                            while [ $i -le 20 ]; do
+                                if curl -s http://localhost:3000 >/dev/null; then
+                                    echo "✅ App is responding at http://localhost:3000"
+                                    break
+                                fi
+                                echo "⏳ App not ready yet... ($i)"
+                                sleep 3
+                                i=$((i+1))
+                            done
 
-                            echo "⏳ PM2 started Next.js app on port 3000"
+                            if [ $i -gt 20 ]; then
+                                echo "❌ App did not start in time"
+                                pm2 logs next-app --lines 50
+                                exit 1
+                            fi
                         '''
                     }
                 }
