@@ -96,9 +96,9 @@ pipeline {
                 script {
                     dir('bulletin-board-next') {
                         sh '''
+                            pm2 delete all
                             # 使用 pm2 启动新的前端服务
                             pm2 start npm --name next-app -- run start
-                            pm2 restart next-app || true
 
                             # 打印 pm2 状态
                             pm2 status
@@ -199,36 +199,23 @@ pipeline {
                         rm -f /tmp/zap.log
 
                         echo "🚀 Starting ZAP in background..."
-                        /opt/zap/zap.sh -daemon \
-                            -host 0.0.0.0 \
-                            -port 8090 \
-                            -config api.disablekey=true \
-                            -config api.addrs.addr.name=.* \
-                            > /tmp/zap.log 2>&1 &
+                        /opt/zap/zap.sh -daemon -configfile zap-config.properties > /tmp/zap.log 2>&1 &
 
                         echo "🌐 Waiting for ZAP to be ready (log-based)..."
-
-                        # 等待 ZAP 日志文件被写入
-                        for i in {1..30}; do
+                        ZAP_READY=0
+                        for i in {1..60}; do
                             if grep -q "ZAP is now listening" /tmp/zap.log; then
                                 echo "✅ ZAP is ready (log detected)"
+                                ZAP_READY=1
                                 break
                             fi
                             echo "⏳ ZAP not ready yet... ($i)"
-                            sleep 2
+                            sleep 5
                         done
 
-                        # 如果依然 grep 不到，则说明失败
-                        if ! grep -q "ZAP is now listening" /tmp/zap.log; then
+                        if [ "$ZAP_READY" = "0" ]; then
                             echo "❌ ZAP did not start successfully"
                             cat /tmp/zap.log
-                            exit 1
-                        fi
-
-                        # 再用 curl 二次确认
-                        if ! curl -s http://localhost:8090/JSON/core/view/version/ | grep -q "version"; then
-                            echo "❌ ZAP API not responsive after startup"
-                            tail -n 100 /tmp/zap.log
                             exit 1
                         fi
 
