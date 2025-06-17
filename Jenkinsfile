@@ -103,10 +103,7 @@ pipeline {
                             pm2 delete next-app || true
 
                             echo "🚀 Starting Next.js app with PM2"
-                            pm2 start npm --name next-app -- run start \
-                                --watch \
-                                --restart-delay 5000 \
-                                --max-restarts 10
+                            pm2 start npm --name next-app -- run start 
 
                             echo "⏳ Waiting for app to be ready..."
                             i=1
