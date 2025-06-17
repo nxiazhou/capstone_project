@@ -197,20 +197,23 @@ pipeline {
 
                                 sleep 5  # 稍微等一下避免 curl 连续 90 次打爆 CPU
 
-                                echo "🔄 Waiting for ZAP to fully initialize..."
-                                for i in {1..90}; do
+                                echo "⏳ Waiting for ZAP to start..."
+                                ZAP_STARTED=0
+                                for i in {1..60}; do
+                                if netstat -tuln | grep ":8090" > /dev/null; then
                                     if curl -s http://localhost:8090/JSON/core/view/version/ | grep -q "version"; then
-                                        echo "✅ ZAP API is ready"
-                                        break
+                                    echo "✅ ZAP API is ready"
+                                    ZAP_STARTED=1
+                                    break
                                     fi
-                                    echo "⏳ ZAP not ready yet ($i/60)..."
-                                    sleep 2
+                                fi
+                                sleep 2
                                 done
 
-                                if ! curl -s http://localhost:8090/JSON/core/view/version/ | grep -q "version"; then
-                                    echo "❌ ZAP failed to start. Dumping logs:"
-                                    tail -n 50 /tmp/zap.log
-                                    exit 1
+                                if [ "$ZAP_STARTED" = "0" ]; then
+                                echo "❌ ZAP failed to start. Dumping log:"
+                                tail -n 100 /tmp/zap.log
+                                exit 1
                                 fi
 
                                 # 🕷️ Spider 扫描
