@@ -414,6 +414,10 @@ npm run dev
     kubectl delete all --all -n default
     kubectl delete ingress --all -n default
 
+删除load_balancer:
+
+    /root/deploy-yamls/delete_public_ingress.sh
+
 应用配置:
 
     kubectl apply -f /root/deploy-yamls/next-deploy.yaml
@@ -431,6 +435,4 @@ npm run dev
 
     kubectl get svc next-frontend-service -n default -o jsonpath='{.status.loadBalancer.ingress[0].ip}'
 
-删除load_balancer:
 
-    /root/deploy-yamls/delete_public_ingress.sh
