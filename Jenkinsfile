@@ -100,10 +100,7 @@ pipeline {
                             pm2 delete next-app || true
 
                             # 使用 pm2 启动新的前端服务
-                            pm2 start npm --name next-app -- run start
-
-                            # 保存 pm2 配置（可选，方便日后恢复）
-                            pm2 save
+                            pm2 restart npm --name next-app -- run start
 
                             # 打印 pm2 状态
                             pm2 status
