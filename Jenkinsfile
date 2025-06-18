@@ -295,83 +295,83 @@ pipeline {
             }
         }
 
-        stage('Run Next.js App in Kubernetes') {
-            steps {
-                dir('bulletin-board-next') {
-                    echo '🚀 Starting Kubernetes deployment for Next.js app...'
-                    script {
-                        try {
-                            sh '''
-                                echo "🔐 Logging into ACR..."
-                                docker login crpi-hmkoucghneqevmd4.cn-hangzhou.personal.cr.aliyuncs.com \
-                                    -u "${ACR_USERNAME}" -p "${ACR_PASSWORD}"
-                            '''
+        // stage('Run Next.js App in Kubernetes') {
+        //     steps {
+        //         dir('bulletin-board-next') {
+        //             echo '🚀 Starting Kubernetes deployment for Next.js app...'
+        //             script {
+        //                 try {
+        //                     sh '''
+        //                         echo "🔐 Logging into ACR..."
+        //                         docker login crpi-hmkoucghneqevmd4.cn-hangzhou.personal.cr.aliyuncs.com \
+        //                             -u "${ACR_USERNAME}" -p "${ACR_PASSWORD}"
+        //                     '''
 
-                            sh '''
-                                echo "🏗 Building Docker image..."
-                                docker build -t crpi-hmkoucghneqevmd4.cn-hangzhou.personal.cr.aliyuncs.com/dddd_nxz/dddd_platform:latest .
-                                docker image prune -f
+        //                     sh '''
+        //                         echo "🏗 Building Docker image..."
+        //                         docker build -t crpi-hmkoucghneqevmd4.cn-hangzhou.personal.cr.aliyuncs.com/dddd_nxz/dddd_platform:latest .
+        //                         docker image prune -f
 
-                                echo "📤 Pushing Docker image to ACR..."
-                                docker push crpi-hmkoucghneqevmd4.cn-hangzhou.personal.cr.aliyuncs.com/dddd_nxz/dddd_platform:latest
-                            '''
+        //                         echo "📤 Pushing Docker image to ACR..."
+        //                         docker push crpi-hmkoucghneqevmd4.cn-hangzhou.personal.cr.aliyuncs.com/dddd_nxz/dddd_platform:latest
+        //                     '''
 
-                            sh '''
-                                echo "🧹 Cleaning old Kubernetes resources..."
-                                eval "$KUBE_CMD delete all --all -n default" || true
-                                eval "$KUBE_CMD delete ingress --all -n default" || true
-                            '''
+        //                     sh '''
+        //                         echo "🧹 Cleaning old Kubernetes resources..."
+        //                         eval "$KUBE_CMD delete all --all -n default" || true
+        //                         eval "$KUBE_CMD delete ingress --all -n default" || true
+        //                     '''
 
-                            sh '''
-                                echo "📄 Applying Kubernetes manifests..."
-                                eval "$KUBE_CMD apply -f /root/deploy-yamls/next-deploy.yaml"
-                                eval "$KUBE_CMD apply -f /root/deploy-yamls/next-service.yaml"
-                                eval "$KUBE_CMD apply -f /root/deploy-yamls/next-ingress.yaml"
-                            '''
+        //                     sh '''
+        //                         echo "📄 Applying Kubernetes manifests..."
+        //                         eval "$KUBE_CMD apply -f /root/deploy-yamls/next-deploy.yaml"
+        //                         eval "$KUBE_CMD apply -f /root/deploy-yamls/next-service.yaml"
+        //                         eval "$KUBE_CMD apply -f /root/deploy-yamls/next-ingress.yaml"
+        //                     '''
 
-                            sh '''#!/bin/bash
-                                echo "⏳ Waiting for pod to be Running..."
-                                for i in $(seq 1 30); do
-                                    STATUS=$(eval "$KUBE_CMD get pods -o jsonpath='{.items[0].status.phase}'")
-                                    echo "Current pod status: $STATUS"
-                                    if [ "$STATUS" = "Running" ]; then
-                                        echo "✅ Pod is running."
-                                        break
-                                    fi
-                                    sleep 5
-                                done
-                            '''
+        //                     sh '''#!/bin/bash
+        //                         echo "⏳ Waiting for pod to be Running..."
+        //                         for i in $(seq 1 30); do
+        //                             STATUS=$(eval "$KUBE_CMD get pods -o jsonpath='{.items[0].status.phase}'")
+        //                             echo "Current pod status: $STATUS"
+        //                             if [ "$STATUS" = "Running" ]; then
+        //                                 echo "✅ Pod is running."
+        //                                 break
+        //                             fi
+        //                             sleep 5
+        //                         done
+        //                     '''
 
-                            sh '''#!/bin/bash
-                                echo "🌐 Fetching Next.js Ingress Public IP..."
-                                export KUBECONFIG=/root/.kube/config
+        //                     sh '''#!/bin/bash
+        //                         echo "🌐 Fetching Next.js Ingress Public IP..."
+        //                         export KUBECONFIG=/root/.kube/config
 
-                                for i in $(seq 1 30); do
-                                    IP=$(kubectl get svc next-frontend-service -n default -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
-                                    if [ -n "$IP" ]; then
-                                        echo "✅ Ingress External IP: $IP"
-                                        echo "🔗 Access your app at (Kubernetes for production): http://$IP"
-                                        break
-                                    else
-                                        echo "⏳ Still waiting for external IP... ($i)"
-                                        sleep 5
-                                    fi
-                                done
+        //                         for i in $(seq 1 30); do
+        //                             IP=$(kubectl get svc next-frontend-service -n default -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+        //                             if [ -n "$IP" ]; then
+        //                                 echo "✅ Ingress External IP: $IP"
+        //                                 echo "🔗 Access your app at (Kubernetes for production): http://$IP"
+        //                                 break
+        //                             else
+        //                                 echo "⏳ Still waiting for external IP... ($i)"
+        //                                 sleep 5
+        //                             fi
+        //                         done
 
-                                if [ -z "$IP" ]; then
-                                    echo "❌ External IP was not assigned within timeout"
-                                    exit 1
-                                fi
-                            '''
-                        } catch (Exception e) {
-                            echo "❌ Kubernetes deployment failed: ${e.getMessage()}"
-                            currentBuild.result = 'FAILURE'
-                            throw e
-                        }
-                    }
-                }
-            }
-        }
+        //                         if [ -z "$IP" ]; then
+        //                             echo "❌ External IP was not assigned within timeout"
+        //                             exit 1
+        //                         fi
+        //                     '''
+        //                 } catch (Exception e) {
+        //                     echo "❌ Kubernetes deployment failed: ${e.getMessage()}"
+        //                     currentBuild.result = 'FAILURE'
+        //                     throw e
+        //                 }
+        //             }
+        //         }
+        //     }
+        // }
 
         stage('Get ECS Public IP') {
             steps {
