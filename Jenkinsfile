@@ -203,7 +203,7 @@ pipeline {
                 script {
                     catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
                         try {
-                            sh '''#!/bin/bash
+                            sh '''
                                 echo $0
                                 set -e
 
@@ -225,8 +225,9 @@ pipeline {
                                 echo "🚀 Starting ZAP in background..."
                                 /opt/zap/zap.sh -daemon -host 0.0.0.0 -port 8090 \
                                     -config api.disablekey=true \
-                                    -config api.addrs.addr.name=.* \
-                                    -config api.addrs.addr.regex=true > /tmp/zap.log 2>&1 &
+                                    -config api.addrs.addr.name=".*" \
+                                    -config api.addrs.addr.regex=true \
+                                    -addonupdate false > /tmp/zap.log 2>&1 &
 
                                 echo "🌐 Waiting for ZAP to be ready (log-based)..."
                                 ZAP_READY=0
