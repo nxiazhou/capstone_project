@@ -203,7 +203,8 @@ pipeline {
                 script {
                     catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
                         try {
-                            sh '''
+                            sh '''#!/bin/bash
+                                echo $0
                                 set -e
 
                                 echo "🧹 Killing old ZAP..."
