@@ -31,71 +31,71 @@ pipeline {
             }
         }
 
-        // stage('Check if package.json changed') {
-        //     steps {
-        //         script {
-        //             try {
-        //                 dir('bulletin-board-next') {
-        //                     def changes = sh(script: "git diff --name-only HEAD HEAD~1", returnStdout: true).trim()
-        //                     if (changes.contains("package.json")) {
-        //                         echo '🔍 package.json has changed. Clearing cache...'
-        //                         sh '''
-        //                             rm -rf node_modules package-lock.json .next
-        //                         '''
-        //                     } else {
-        //                         echo '🔒 No changes in package.json. Skipping cache clear.'
-        //                     }
-        //                 }
-        //             } catch (Exception e) {
-        //                 echo '❌ Error checking package.json changes: ${e.getMessage()}'
-        //                 throw e
-        //             }
-        //         }
-        //     }
-        // }
+        stage('Check if package.json changed') {
+            steps {
+                script {
+                    try {
+                        dir('bulletin-board-next') {
+                            def changes = sh(script: "git diff --name-only HEAD HEAD~1", returnStdout: true).trim()
+                            if (changes.contains("package.json")) {
+                                echo '🔍 package.json has changed. Clearing cache...'
+                                sh '''
+                                    rm -rf node_modules package-lock.json .next
+                                '''
+                            } else {
+                                echo '🔒 No changes in package.json. Skipping cache clear.'
+                            }
+                        }
+                    } catch (Exception e) {
+                        echo '❌ Error checking package.json changes: ${e.getMessage()}'
+                        throw e
+                    }
+                }
+            }
+        }
 
-        // stage('Install Dependencies') {
-        //     steps {
-        //         echo '📦 Installing all dependencies...'
-        //         script {
-        //             try {
-        //                 dir('bulletin-board-next') {
-        //                     sh '''
-        //                         npm install --save-dev
-        //                         echo "✅ Npm dependencies installed"
-        //                     '''
-        //                 }
-        //             } catch (Exception e) {
-        //                 echo '❌ Error during dependencies installation: ${e.getMessage()}'
-        //                 throw e
-        //             }
-        //         }
-        //     }
-        // }
+        stage('Install Dependencies') {
+            steps {
+                echo '📦 Installing all dependencies...'
+                script {
+                    try {
+                        dir('bulletin-board-next') {
+                            sh '''#!/bin/bash
+                                npm install --save-dev
+                                echo "✅ Npm dependencies installed"
+                            '''
+                        }
+                    } catch (Exception e) {
+                        echo '❌ Error during dependencies installation: ${e.getMessage()}'
+                        throw e
+                    }
+                }
+            }
+        }
 
-        // stage('Build Project') {
-        //     steps {
-        //         echo '🔨 Building Next.js app...'
-        //         script {
-        //             try {
-        //                 dir('bulletin-board-next') {
-        //                     sh 'npm run build || { echo "❌ Build failed"; exit 1; }'
-        //                     echo '✅ Build completed successfully'
-        //                 }
-        //             } catch (Exception e) {
-        //                 echo '❌ Error during build: ${e.getMessage()}'
-        //                 throw e
-        //             }
-        //         }
-        //     }
-        // }
+        stage('Build Project') {
+            steps {
+                echo '🔨 Building Next.js app...'
+                script {
+                    try {
+                        dir('bulletin-board-next') {
+                            sh 'npm run build || { echo "❌ Build failed"; exit 1; }'
+                            echo '✅ Build completed successfully'
+                        }
+                    } catch (Exception e) {
+                        echo '❌ Error during build: ${e.getMessage()}'
+                        throw e
+                    }
+                }
+            }
+        }
 
         stage('Start App for Testing') {
             steps {
                 echo '🚦 Starting Next.js app for testing...'
                 script {
                     dir('bulletin-board-next') {
-                        sh '''
+                        sh '''#!/bin/bash
                             echo "🔁 Checking if PM2 is running"
                             pm2 ping > /dev/null 2>&1 || pm2 save
 
@@ -133,69 +133,69 @@ pipeline {
 
 
 
-        // stage('Run Unit Tests') {
-        //     steps {
-        //         echo '🧠 Running unit tests...'
-        //         script {
-        //             catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-        //                 try {
-        //                     dir('bulletin-board-next') {
-        //                         sh 'NODE_ENV=development npm run test || { echo "❌ Unit tests failed"; exit 1; }'
-        //                         echo '✅ Unit tests passed'
-        //                     }
-        //                 } catch (Exception e) {
-        //                     echo '❌ Error running unit tests: ${e.getMessage()}'
-        //                     throw e
-        //                 }
-        //             }
-        //         }
-        //     }
-        // }
+        stage('Run Unit Tests') {
+            steps {
+                echo '🧠 Running unit tests...'
+                script {
+                    catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                        try {
+                            dir('bulletin-board-next') {
+                                sh 'NODE_ENV=development npm run test || { echo "❌ Unit tests failed"; exit 1; }'
+                                echo '✅ Unit tests passed'
+                            }
+                        } catch (Exception e) {
+                            echo '❌ Error running unit tests: ${e.getMessage()}'
+                            throw e
+                        }
+                    }
+                }
+            }
+        }
 
-        // stage('Run Integration Tests') {
-        //     steps {
-        //         echo '🔄 Running integration tests...'
-        //         script {
-        //             catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-        //                 try {
-        //                     dir('bulletin-board-next') {
-        //                         sh '''
-        //                             export DISPLAY=:99
-        //                             nohup Xvfb :99 -screen 0 1920x1080x24 > /dev/null 2>&1 &
-        //                             sleep 2
-        //                             npx cypress run || { echo "❌ Integration tests failed"; exit 1; }
-        //                         '''
-        //                         echo '✅ Integration tests passed'
-        //                     }
-        //                 } catch (Exception e) {
-        //                     echo '❌ Error running integration tests: ${e.getMessage()}'
-        //                     throw e
-        //                 }
-        //             }
-        //         }
-        //     }
-        // }
+        stage('Run Integration Tests') {
+            steps {
+                echo '🔄 Running integration tests...'
+                script {
+                    catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                        try {
+                            dir('bulletin-board-next') {
+                                sh '''#!/bin/bash
+                                    export DISPLAY=:99
+                                    nohup Xvfb :99 -screen 0 1920x1080x24 > /dev/null 2>&1 &
+                                    sleep 2
+                                    npx cypress run || { echo "❌ Integration tests failed"; exit 1; }
+                                '''
+                                echo '✅ Integration tests passed'
+                            }
+                        } catch (Exception e) {
+                            echo '❌ Error running integration tests: ${e.getMessage()}'
+                            throw e
+                        }
+                    }
+                }
+            }
+        }
 
-        // stage('Security Scan - Snyk') {
-        //     steps {
-        //         echo '🛡️ Running Snyk scan...'
-        //         script {
-        //             catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-        //                 try {
-        //                     dir('bulletin-board-next') {
-        //                         sh '''
-        //                            snyk test || echo "⚠️ Snyk scan completed with vulnerabilities (non-blocking)"
-        //                         '''
-        //                         echo '✅ Snyk scan completed'
-        //                     }
-        //                 } catch (Exception e) {
-        //                     echo '❌ Error running Snyk scan: ${e.getMessage()}'
-        //                     throw e
-        //                 }
-        //             }
-        //         }
-        //     }
-        // }
+        stage('Security Scan - Snyk') {
+            steps {
+                echo '🛡️ Running Snyk scan...'
+                script {
+                    catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                        try {
+                            dir('bulletin-board-next') {
+                                sh '''#!/bin/bash
+                                   snyk test || echo "⚠️ Snyk scan completed with vulnerabilities (non-blocking)"
+                                '''
+                                echo '✅ Snyk scan completed'
+                            }
+                        } catch (Exception e) {
+                            echo '❌ Error running Snyk scan: ${e.getMessage()}'
+                            throw e
+                        }
+                    }
+                }
+            }
+        }
 
         stage('Security Scan - ZAP') {
             steps {
@@ -329,7 +329,7 @@ pipeline {
                                 eval "$KUBE_CMD apply -f /root/deploy-yamls/next-ingress.yaml"
                             '''
 
-                            sh '''
+                            sh '''#!/bin/bash
                                 echo "⏳ Waiting for pod to be Running..."
                                 for i in $(seq 1 30); do
                                     STATUS=$(eval "$KUBE_CMD get pods -o jsonpath='{.items[0].status.phase}'")
@@ -342,7 +342,7 @@ pipeline {
                                 done
                             '''
 
-                            sh '''
+                            sh '''#!/bin/bash
                                 echo "🌐 Fetching Next.js Ingress Public IP..."
                                 export KUBECONFIG=/root/.kube/config
 
