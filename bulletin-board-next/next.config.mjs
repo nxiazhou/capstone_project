@@ -29,7 +29,11 @@ const nextConfig = {
       {
         source: '/api/files/:path*',
         destination: 'http://8.218.1.107:8083/api/files/:path*' // 真实服务地址
-      }
+      },
+      {
+        source: '/api/panels/:path*',
+        destination: 'http://8.218.1.107:8084/api/panels/:path*'
+      }
     ];
   },
 };

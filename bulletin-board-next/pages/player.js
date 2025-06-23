@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback  } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/router';
 import Sidebar from "../components/Sidebar";
@@ -15,8 +15,6 @@ export default function Player() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showControls, setShowControls] = useState(true);
   const [controlsTimeout, setControlsTimeout] = useState(null);
-  const [startTime, setStartTime] = useState(null);
-  const [endTime, setEndTime] = useState(null);
 
   const currentContent = contents.length > 0 ? contents[currentIndex % contents.length] : null;
 
@@ -35,14 +33,12 @@ export default function Player() {
     }
   };
 
-
   const handlePrevious = () => {
     if (contents.length > 0) {
       setCurrentIndex(prev => {
         const length = contents.length;
         return length === 0 ? 0 : (prev - 1 + length) % length;
       });
-
     }
   };
 
@@ -51,10 +47,11 @@ export default function Player() {
     router.push('/schedule-management');
   };
 
-  // ✅ 获取调度详情（包含 startTime 和 endTime）
+  // 获取调度详情
   useEffect(() => {
-    setIsClient(true); // ✅ 告诉 React “我现在在浏览器了”
+    setIsClient(true);
   }, []);
+  
   useEffect(() => {
     if (!isClient || !scheduleId) return;
 
@@ -73,18 +70,15 @@ export default function Player() {
 
         const data = await res.json();
 
-        setStartTime(new Date(data.startTime));
-        setEndTime(new Date(data.endTime));
-
-      // ✅ 根据 orderNo 排序
-      const items = data.contents
-        .sort((a, b) => a.orderNo - b.orderNo)
-        .map(item => ({
-          id: item.id,
-          name: item.originalName,
-          url: item.url,
-          mediaType: item.url.endsWith(".mp4") ? "video" : "image"
-        }));
+        // 只获取内容信息，不处理时间范围
+        const items = data.contents
+          .sort((a, b) => a.orderNo - b.orderNo)
+          .map(item => ({
+            id: item.id,
+            name: item.originalName,
+            url: item.url,
+            mediaType: item.url.endsWith(".mp4") ? "video" : "image"
+          }));
 
         setContents(items);
       } catch (error) {
@@ -95,52 +89,29 @@ export default function Player() {
     fetchScheduleDetail();
   }, [scheduleId, isClient]);
 
-  // ✅ 控制是否允许播放：时间范围内才播放
+  // 图片自动播放逻辑（简单可靠的实现）
   useEffect(() => {
-    const timer = setInterval(() => {
-      const now = new Date();
-      if (startTime && endTime) {
-        const inRange = now >= startTime && now <= endTime;
-        if (!inRange) {
-          setIsPlaying(false);
-          if (videoRef.current) videoRef.current.pause();
-        } else {
-          if (!isPlaying && videoRef.current) {
-            setIsPlaying(true);
-            videoRef.current.play();
-          }
-        }
-      }
-    }, 10000); // 每 10 秒检查一次
-
-    return () => clearInterval(timer);
-  }, [startTime, endTime, isPlaying]);
-
-  // ✅ 控制 image 自动播放
-  const imageTimerRef = useRef(null);
-
-  useEffect(() => {
-    if (imageTimerRef.current) {
-      clearTimeout(imageTimerRef.current);
-      imageTimerRef.current = null;
-    }
-
-    const current = contents[currentIndex];
-    if (!isPlaying || !current || current.mediaType !== 'image') return;
-
-    imageTimerRef.current = setTimeout(() => {
+    if (!isPlaying || !currentContent || currentContent.mediaType !== 'image') return;
+    
+    const timer = setTimeout(() => {
       handleNext();
     }, 5000);
+    
+    return () => clearTimeout(timer);
+  }, [currentIndex, isPlaying, currentContent, handleNext]);
 
-    return () => {
-      if (imageTimerRef.current) {
-        clearTimeout(imageTimerRef.current);
-        imageTimerRef.current = null;
-      }
-    };
-  }, [isPlaying, currentIndex, contents, handleNext]);
+  // 视频播放结束处理
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !currentContent || currentContent.mediaType !== 'video') return;
+    
+    const handleEnded = () => handleNext();
+    
+    video.addEventListener('ended', handleEnded);
+    return () => video.removeEventListener('ended', handleEnded);
+  }, [currentContent, handleNext]);
 
-  // ✅ 全屏切换监听
+  // 全屏切换监听
   const handleMouseMove = () => {
     setShowControls(true);
     if (controlsTimeout) clearTimeout(controlsTimeout);
@@ -154,12 +125,14 @@ export default function Player() {
     if (!isFullscreen) {
       try {
         if (containerRef.current.requestFullscreen) await containerRef.current.requestFullscreen();
+        setIsFullscreen(true);
       } catch (err) {
         console.error("Fullscreen error:", err);
       }
     } else {
       try {
         if (document.exitFullscreen) await document.exitFullscreen();
+        setIsFullscreen(false);
       } catch (err) {
         console.error("Exit fullscreen error:", err);
       }
@@ -203,17 +176,17 @@ export default function Player() {
               controls
               autoPlay
               playsInline
-              onEnded={handleNext}
             />
           ) : (
             <Image
-              key={currentContent.url} // ⭐️ 强制重新挂载 Image
+              key={currentContent.url}
               src={currentContent.url}
               alt={currentContent.name}
               fill
               sizes="(min-width: 1280px) 85vw, 100vw"
               style={{ objectFit: 'contain' }}
               priority
+              onError={() => handleNext()} // 图片加载失败时自动跳过
             />
           )}
         </div>

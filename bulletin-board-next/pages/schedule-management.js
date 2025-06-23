@@ -22,10 +22,9 @@ export default function ScheduleManagement() {
   const [contentOptions, setContentOptions] = useState([]);
   const [selectedContents, setSelectedContents] = useState([]);
   const [selectedPanelIds, setSelectedPanelIds] = useState([]);
-  const panelOptions = useMemo(() => [
-    { value: 1, label: "Panel 1" },
-    { value: 2, label: "Panel 2" }
-  ], []);
+  // 修改1: 移除硬编码的panelOptions
+  const [panelOptions, setPanelOptions] = useState([]); // 新增状态存储面板选项
+
 
   // memo 处理已选内容项
   const selectedContentOptions = useMemo(() => {
@@ -48,11 +47,16 @@ export default function ScheduleManagement() {
     try {
       const token = localStorage.getItem("authToken");
       const query = new URLSearchParams({
-        page: currentPage,
-        size: pageSize,
         ...(searchKeyword && { keyword: searchKeyword }),
         ...(dateFilter && { date: dateFilter })
       }).toString();
+
+    // 手动记录请求信息
+    console.log(
+      `GET /api/schedules?${query} HTTP/1.1\n` +
+      `Host: ${window.location.host}\n` +
+      `Authorization: Bearer ${token}\n`
+    );
 
       const res = await fetch(`/api/schedules?${query}`, {
         method: "GET",
@@ -125,6 +129,36 @@ export default function ScheduleManagement() {
       };
 
       fetchContents();
+
+
+      const fetchPanels = async () => {
+      try {
+        const token = localStorage.getItem("authToken");
+        const res = await fetch("/api/panels", {
+          method: "GET",
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        if (!res.ok) throw new Error("Failed to fetch panels");
+
+        const result = await res.json();
+        if (result.code === 200) {
+          // 转换API响应为Select需要的格式
+          const options = result.data.map(panel => ({
+            value: panel.id,
+            label: `${panel.name} (${panel.location})`
+          }));
+          setPanelOptions(options);
+        } else {
+          throw new Error(result.message);
+        }
+      } catch (error) {
+        console.error("获取面板列表失败:", error);
+        setError("无法加载面板列表");
+      }
+    };
+
+      fetchPanels();
     }
   }, [showForm, selectedSchedule]);
 
