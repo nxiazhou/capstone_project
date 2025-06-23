@@ -1,75 +1,211 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Sidebar from "../components/Sidebar";
 
-// Mock data
-const mockDevices = [
-  { id: 1, name: 'Device 1', type: 'Type A', status: 'Active', location: 'Location 1' },
-  { id: 2, name: 'Device 2', type: 'Type B', status: 'Maintenance', location: 'Location 2' },
-];
+// API 调用函数
+const API_BASE_URL = '/api/panels';
 
-const mockSchedules = [
-  { id: 1, title: 'Daily Check', start: '2024-03-20 09:00', end: '2024-03-20 10:00' },
-  { id: 2, title: 'Maintenance', start: '2024-03-21 14:00', end: '2024-03-21 16:00' },
-];
+const fetchPanels = async () => {
+  try {
+    const token = localStorage.getItem('authToken');
+    const response = await fetch(API_BASE_URL, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const result = await response.json();
+    if (result.code === 200) {
+      return result.data;
+    }
+    throw new Error(result.message);
+  } catch (error) {
+    console.error('Error fetching panels:', error);
+    return [];
+  }
+};
+
+const createPanel = async (panelData) => {
+  try {
+    const token = localStorage.getItem('authToken');
+    const response = await fetch(API_BASE_URL, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(panelData)
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const result = await response.json();
+    if (result.code === 200) {
+      return result.data;
+    }
+    throw new Error(result.message);
+  } catch (error) {
+    console.error('Error creating panel:', error);
+    throw error;
+  }
+};
+
+const updatePanel = async (id, panelData) => {
+  try {
+    const token = localStorage.getItem('authToken');
+    const response = await fetch(`${API_BASE_URL}/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(panelData)
+    });
+    const text = await response.text();
+    console.log("Updates the device interface return content:", text);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status} \n ${text}`);
+    }
+    const result = JSON.parse(text);
+    if (result.code === 200) {
+      return result.data;
+    }
+    throw new Error(result.message);
+  } catch (error) {
+    console.error('Error updating panel:', error);
+    throw error;
+  }
+};
+
+const deletePanel = async (id) => {
+  try {
+    const token = localStorage.getItem('authToken');
+    const response = await fetch(`${API_BASE_URL}/${id}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const result = await response.json();
+    if (result.code === 200) {
+      return true;
+    }
+    throw new Error(result.message);
+  } catch (error) {
+    console.error('Error deleting panel:', error);
+    throw error;
+  }
+};
 
 export default function DeviceManagement() {
-  const [devices, setDevices] = useState(mockDevices);
+  const [panels, setPanels] = useState([]);
   const [showModal, setShowModal] = useState(false);
-  const [currentDevice, setCurrentDevice] = useState(null);
+  const [currentPanel, setCurrentPanel] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [formData, setFormData] = useState({
+    subscriberId: 1,
     name: '',
-    type: '',
-    status: '',
     location: '',
-  });
-  const [scheduleData, setScheduleData] = useState({
-    deviceId: null,
-    scheduleId: '',
-    date: '',
-    startTime: '',
-    endTime: '',
-  });
+    ipAddress: '',
+    macAddress: '',
+  });  
+  const [error, setError] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleOpenModal = (device = null) => {
-    if (device) {
-      setCurrentDevice(device);
-      setFormData(device);
-    } else {
-      setCurrentDevice(null);
+  // 加载面板数据
+  useEffect(() => {
+    const loadPanels = async () => {
+      setIsLoading(true);
+      try {
+        const data = await fetchPanels();
+        setPanels(data);
+      } catch (error) {
+        setError('Failed to load panels: ' + error.message);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadPanels();
+  }, []);
+
+  const handleOpenModal = (panel = null) => {
+    if (panel) {
+      setCurrentPanel(panel);
       setFormData({
+        subscriberId: panel.subscriberId,
+        name: panel.name,
+        location: panel.location,
+        ipAddress: panel.ipAddress,
+        macAddress: panel.macAddress,
+      });
+    } else {
+      setCurrentPanel(null);
+      setFormData({
+        subscriberId: 1,
         name: '',
-        type: '',
-        status: '',
         location: '',
+        ipAddress: '',
+        macAddress: '',
       });
     }
     setShowModal(true);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (currentDevice) {
-      setDevices(devices.map(device =>
-        device.id === currentDevice.id ? { ...formData, id: device.id } : device
-      ));
-    } else {
-      setDevices([...devices, { ...formData, id: devices.length + 1 }]);
+    setIsLoading(true);
+    setError(null);
+    try {
+      if (currentPanel) {
+        const updatedPanel = await updatePanel(currentPanel.id, formData);
+        setPanels(panels.map(panel =>
+          panel.id === currentPanel.id ? updatedPanel : panel
+        ));
+      } else {
+        const newPanel = await createPanel(formData);
+        setPanels([...panels, newPanel]);
+      }
+      setShowModal(false);
+    } catch (error) {
+      setError(error.message);
+    } finally {
+      setIsLoading(false);
     }
-    setShowModal(false);
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this device?')) {
-      setDevices(devices.filter(device => device.id !== id));
+      setIsLoading(true);
+      setError(null);
+      try {
+        await deletePanel(id);
+        setPanels(panels.filter(panel => panel.id !== id));
+      } catch (error) {
+        setError('Failed to delete device: ' + error.message);
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
-  const filteredDevices = devices.filter(device => {
-    const matchesSearch = device.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         device.location.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'All' || device.status === statusFilter;
+  const filteredPanels = panels.filter(panel => {
+    const matchesSearch = panel.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         panel.location.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === 'All' || panel.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
@@ -79,6 +215,11 @@ export default function DeviceManagement() {
       <div className="flex-1 p-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-4">Device Management</h1>
+          {error && (
+            <div className="mb-4 p-4 bg-red-100 text-red-700 rounded-lg">
+              {error}
+            </div>
+          )}
           <div className="flex gap-4 mb-6">
             <div className="flex-1">
               <input
@@ -95,9 +236,8 @@ export default function DeviceManagement() {
               onChange={(e) => setStatusFilter(e.target.value)}
             >
               <option value="All">All Status</option>
-              <option value="Active">Active</option>
-              <option value="Maintenance">Maintenance</option>
-              <option value="Offline">Offline</option>
+              <option value="ONLINE">Online</option>
+              <option value="OFFLINE">Offline</option>
             </select>
             <button
               onClick={() => handleOpenModal()}
@@ -113,36 +253,40 @@ export default function DeviceManagement() {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Device Name</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">IP Address</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">MAC Address</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Heartbeat</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {filteredDevices.map((device) => (
-                <tr key={device.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">{device.name}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">{device.type}</td>
+              {filteredPanels.map((panel) => (
+                <tr key={panel.id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap">{panel.name}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">{panel.location}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">{panel.ipAddress}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">{panel.macAddress}</td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full
-                      ${device.status === 'Active' ? 'bg-green-100 text-green-800' : ''}
-                      ${device.status === 'Maintenance' ? 'bg-yellow-100 text-yellow-800' : ''}
-                      ${device.status === 'Offline' ? 'bg-red-100 text-red-800' : ''}
+                      ${panel.status === 'ONLINE' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}
                     `}>
-                      {device.status}
+                      {panel.status === 'ONLINE' ? 'Online' : 'Offline'}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">{device.location}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    {panel.lastHeartbeat ? new Date(panel.lastHeartbeat).toLocaleString() : 'None'}
+                  </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm">
                     <button
-                      onClick={() => handleOpenModal(device)}
+                      onClick={() => handleOpenModal(panel)}
                       className="text-blue-600 hover:text-blue-900 mr-4"
                     >
                       Edit
                     </button>
                     <button
-                      onClick={() => handleDelete(device.id)}
+                      onClick={() => handleDelete(panel.id)}
                       className="text-red-600 hover:text-red-900"
                     >
                       Delete
@@ -158,7 +302,7 @@ export default function DeviceManagement() {
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
             <div className="bg-white rounded-lg p-8 max-w-md w-full">
               <h2 className="text-2xl font-bold mb-6">
-                {currentDevice ? 'Edit Device' : 'Add Device'}
+                {currentPanel ? 'Edit Device' : 'Add Device'}
               </h2>
               <form onSubmit={handleSubmit}>
                 <div className="space-y-4">
@@ -173,30 +317,6 @@ export default function DeviceManagement() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Type</label>
-                    <input
-                      type="text"
-                      required
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                      value={formData.type}
-                      onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Status</label>
-                    <select
-                      required
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                      value={formData.status}
-                      onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                    >
-                      <option value="">Select Status</option>
-                      <option value="Active">Active</option>
-                      <option value="Maintenance">Maintenance</option>
-                      <option value="Offline">Offline</option>
-                    </select>
-                  </div>
-                  <div>
                     <label className="block text-sm font-medium text-gray-700">Location</label>
                     <input
                       type="text"
@@ -204,6 +324,28 @@ export default function DeviceManagement() {
                       className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                       value={formData.location}
                       onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">IP Address</label>
+                    <input
+                      type="text"
+                      required
+                      pattern="^(\d{1,3}\.){3}\d{1,3}$"
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                      value={formData.ipAddress}
+                      onChange={(e) => setFormData({ ...formData, ipAddress: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">MAC Address</label>
+                    <input
+                      type="text"
+                      required
+                      pattern="^([0-9A-Fa-f]{2}(:|-)){5}[0-9A-Fa-f]{2}$"
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                      value={formData.macAddress}
+                      onChange={(e) => setFormData({ ...formData, macAddress: e.target.value })}
                     />
                   </div>
                 </div>

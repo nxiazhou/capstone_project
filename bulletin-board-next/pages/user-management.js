@@ -25,15 +25,13 @@ export default function Usermanagement() {
     password: "",
     companyName: ""
   });
+  const [showPay, setShowPay] = useState(false);
+  const [cardInfo, setCardInfo] = useState({ cardNumber: "", cardName: "", expiry: "", cvv: "" });
 
-
-
-  
   useEffect(() => {
     const token = localStorage.getItem("authToken");
     const storedRole = localStorage.getItem("authRole");
 
-  
     console.log(token);
     
 
@@ -105,43 +103,43 @@ export default function Usermanagement() {
   };
 
   const handleSubmit = async () => {
-  const token = localStorage.getItem("authToken");
-  const url = isEditing
-    ? `/api/admin/users/${formData.userId}`
-    : "/api/admin/users";
+    const token = localStorage.getItem("authToken");
+    const url = isEditing
+      ? `/api/admin/users/${formData.userId}`
+      : "/api/admin/users";
 
-  const method = isEditing ? "PUT" : "POST";
+    const method = isEditing ? "PUT" : "POST";
 
-  const payload = {
-    username: formData.username,
-    email: formData.email,
-    password: formData.password || undefined, // 添加这个可选逻辑
-    contactName: formData.username,
-    phone: formData.phone,
-    address: formData.address,
-    companyName: formData.companyName,
-    role: formData.role
-  };
+    const payload = {
+      username: formData.username,
+      email: formData.email,
+      password: formData.password || undefined,
+      contactName: formData.username,
+      phone: formData.phone,
+      address: formData.address,
+      companyName: formData.companyName,
+      role: formData.role
+    };
 
-  const res = await fetch(url, {
-    method,
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify(payload),
-  });
-  
+    const res = await fetch(url, {
+      method,
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(payload),
+    });
+    
 
-  const text = await res.text();
-  if (res.ok) {
-    alert(isEditing ? "User updated." : "User added.");
-    setShowModal(false);
-    window.location.reload();
-  } else {
-    alert("Error: " + text);
-    console.error("❌ Update error:", text);
-  }
+    const text = await res.text();
+    if (res.ok) {
+      alert(isEditing ? "User updated." : "User added.");
+      setShowModal(false);
+      window.location.reload();
+    } else {
+      alert("Error: " + text);
+      console.error("❌ Update error:", text);
+    }
   };
 
   const handleDelete = async (userId, username, role) => {
@@ -162,6 +160,23 @@ export default function Usermanagement() {
       setUsers(users.filter((u) => u.userId !== userId));
     } else {
       alert("Delete failed: " + text);
+    }
+  };
+
+  const handlePay = async () => {
+    try {
+      const token = localStorage.getItem("authToken");
+      const res = await fetch("/api/payments/subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify(cardInfo),
+      });
+      const data = await res.json();
+      alert(data.message);
+      setShowPay(false);
+      setCardInfo({ cardNumber: "", cardName: "", expiry: "", cvv: "" });
+    } catch {
+      alert("Payment failed");
     }
   };
 
@@ -236,6 +251,13 @@ export default function Usermanagement() {
                 <input type="text" value={currentUser.address || ""} className="w-full border px-3 py-2 rounded" />
               </div>
               <button type="button" className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">Save Changes</button>
+              <button
+                type="button"
+                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded ml-2"
+                onClick={() => setShowPay(true)}
+              >
+                Pay Subscription
+              </button>
             </form>
           </div>
         )}
@@ -281,6 +303,31 @@ export default function Usermanagement() {
                 <button className="border px-4 py-2 rounded" onClick={() => setShowModal(false)}>Cancel</button>
                 <button className="bg-blue-600 text-white px-4 py-2 rounded" onClick={handleSubmit}>Submit</button>
               </div>
+            </div>
+          </div>
+        )}
+
+        {showPay && (
+          <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-blue-100 to-indigo-200 z-50">
+            <div className="bg-white rounded-lg shadow-lg w-full max-w-sm p-6 relative">
+              <h2 className="text-xl font-semibold mb-4 text-indigo-700">Pay Subscription</h2>
+              <form className="space-y-4" onSubmit={e => { e.preventDefault(); handlePay(); }}>
+                <input type="text" placeholder="Card Number" value={cardInfo.cardNumber} onChange={e => setCardInfo({ ...cardInfo, cardNumber: e.target.value })} className="w-full border px-3 py-2 rounded" />
+                <input type="text" placeholder="Name on Card" value={cardInfo.cardName} onChange={e => setCardInfo({ ...cardInfo, cardName: e.target.value })} className="w-full border px-3 py-2 rounded" />
+                <div className="flex space-x-2">
+                  <input type="text" placeholder="MM/YY" value={cardInfo.expiry} onChange={e => setCardInfo({ ...cardInfo, expiry: e.target.value })} className="w-1/2 border px-3 py-2 rounded" />
+                  <input type="text" placeholder="CVV" value={cardInfo.cvv} onChange={e => setCardInfo({ ...cardInfo, cvv: e.target.value })} className="w-1/2 border px-3 py-2 rounded" />
+                </div>
+                <button type="submit" className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700">
+                  Pay Now
+                </button>
+              </form>
+              <button
+                onClick={() => setShowPay(false)}
+                className="absolute top-2 right-3 text-gray-400 hover:text-red-500 text-xl font-bold"
+              >
+                ×
+              </button>
             </div>
           </div>
         )}

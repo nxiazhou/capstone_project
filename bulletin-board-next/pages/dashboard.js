@@ -4,12 +4,12 @@ import Link from "next/link";
 export default function Dashboard() {
   // Mock stats for demonstration
   const stats = [
-    { label: "Total Contents", value: 128, icon: "🎬" },
-    { label: "Total Schedules", value: 42, icon: "📅" },
+    { label: "Total Contents", value: 5, icon: "🎬" },
+    { label: "Total Schedules", value: 2, icon: "📅" },
     { label: "Total Users", value: 15, icon: "👤" },
-    { label: "Pending Audits", value: 3, icon: "⏳" },
-    { label: "Approved Contents", value: 120, icon: "✅" },
-    { label: "Rejected Contents", value: 5, icon: "❌" },
+    { label: "Pending Audits", value: 1, icon: "⏳" },
+    { label: "Approved Contents", value: 5, icon: "✅" },
+    { label: "Rejected Contents", value: 0, icon: "❌" },
   ];
   return (
     <div className="flex min-h-screen">

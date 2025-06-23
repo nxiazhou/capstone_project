@@ -2,9 +2,6 @@ import React, { useState } from "react";
 import { useRouter } from "next/router";
 import jwt_decode from "jwt-decode";  // ✅ 用这个，重新安装后就不报错了
 
-const API_BASE = "http://8.210.165.181:8081"; // auth-service 端口
-const PAYMENT_API = "http://8.210.165.181:8085/api/payments/subscribe";
-
 const Login = () => {
   const router = useRouter();
   const [username, setUsername] = useState("");
@@ -174,7 +171,6 @@ const Login = () => {
             <button className="w-full bg-indigo-600 text-white py-2 rounded hover:bg-indigo-700">
               Login
             </button>
-
             {/* <p>Test</p> */}
             <div className="flex justify-between text-sm text-indigo-700 mt-4">
               <button type="button" onClick={() => setShowSignup(true)}>Sign up</button>
