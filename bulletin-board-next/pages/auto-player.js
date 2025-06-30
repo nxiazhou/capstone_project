@@ -3,12 +3,14 @@ import { useRouter } from "next/router";
 
 export default function AutoPlayer() {
   const router = useRouter();
-  const { scheduleId } = router.query;
+  const { scheduleId: queryScheduleId, panelId } = router.query;
+  const [scheduleId, setScheduleId] = useState(null);
   const [contents, setContents] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [startTime, setStartTime] = useState(null);
   const [endTime, setEndTime] = useState(null);
   const [isPlaying, setIsPlaying] = useState(true);
+  const [noPlayable, setNoPlayable] = useState(false);
   const videoRef = useRef(null);
   const imageTimerRef = useRef(null);
 
@@ -18,6 +20,34 @@ export default function AutoPlayer() {
       document.documentElement.requestFullscreen().catch(() => {});
     }
   }, []);
+
+  // 自动识别panel当前Schedule
+  useEffect(() => {
+    if (queryScheduleId) {
+      setScheduleId(queryScheduleId);
+      return;
+    }
+    if (panelId) {
+      const fetchPlayCommand = async () => {
+        try {
+          const token = localStorage.getItem("authToken");
+          const res = await fetch(`/api/panels/${panelId}/play-command`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          if (!res.ok) throw new Error("Failed to fetch play command");
+          const data = await res.json();
+          if (data && data.data && data.data.scheduleId) {
+            setScheduleId(data.data.scheduleId);
+          } else {
+            setNoPlayable(true);
+          }
+        } catch (e) {
+          setNoPlayable(true);
+        }
+      };
+      fetchPlayCommand();
+    }
+  }, [queryScheduleId, panelId]);
 
   // 获取调度详情
   useEffect(() => {
@@ -42,7 +72,7 @@ export default function AutoPlayer() {
           }));
         setContents(items);
       } catch (e) {
-        alert("加载调度失败：" + e.message);
+        setNoPlayable(true);
       }
     };
     fetchSchedule();
@@ -83,6 +113,10 @@ export default function AutoPlayer() {
   const handleVideoEnded = () => {
     handleNext();
   };
+
+  if (noPlayable) {
+    return <div style={{ color: "#fff", background: "#000", height: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>No playable schedule for this panel at this time.</div>;
+  }
 
   if (contents.length === 0) {
     return <div style={{ color: "#fff", background: "#000", height: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>Loading...</div>;

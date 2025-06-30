@@ -1,114 +1,130 @@
 import { useState, useEffect } from 'react';
 import Sidebar from "../components/Sidebar";
 
-// API 调用函数
-const API_BASE_URL = '/api/panels';
+  // API 调用函数
+  const API_BASE_URL = '/api/panels';
 
-const fetchPanels = async () => {
-  try {
-    const token = localStorage.getItem('authToken');
-    const response = await fetch(API_BASE_URL, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
+  const fetchPanels = async () => {
+    try {
+      const token = localStorage.getItem('authToken');
+      const response = await fetch('/api/panels', {
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          // 删除 Content-Type，GET 请求不需要
+        }
+      });
+
+      // 先检查 HTTP 状态
+      if (!response.ok) {
+        // 尝试获取错误详情
+        const text = await response.text();
+        console.error(`API Error (${response.status}):`, text);
+        
+        throw new Error(`API Error ${response.status}: ${
+          text.includes('<!DOCTYPE') ? 'Server Error' : text.substring(0, 50)
+        }`);
       }
-    });
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const result = await response.json();
-    if (result.code === 200) {
-      return result.data;
-    }
-    throw new Error(result.message);
-  } catch (error) {
-    console.error('Error fetching panels:', error);
-    return [];
-  }
-};
-
-const createPanel = async (panelData) => {
-  try {
-    const token = localStorage.getItem('authToken');
-    const response = await fetch(API_BASE_URL, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(panelData)
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const result = await response.json();
-    if (result.code === 200) {
-      return result.data;
-    }
-    throw new Error(result.message);
-  } catch (error) {
-    console.error('Error creating panel:', error);
-    throw error;
-  }
-};
-
-const updatePanel = async (id, panelData) => {
-  try {
-    const token = localStorage.getItem('authToken');
-    const response = await fetch(`${API_BASE_URL}/${id}`, {
-      method: 'PUT',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(panelData)
-    });
-    const text = await response.text();
-    console.log("Updates the device interface return content:", text);
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status} \n ${text}`);
-    }
-    const result = JSON.parse(text);
-    if (result.code === 200) {
-      return result.data;
-    }
-    throw new Error(result.message);
-  } catch (error) {
-    console.error('Error updating panel:', error);
-    throw error;
-  }
-};
-
-const deletePanel = async (id) => {
-  try {
-    const token = localStorage.getItem('authToken');
-    const response = await fetch(`${API_BASE_URL}/${id}`, {
-      method: 'DELETE',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
+      // 检查响应类型
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        const text = await response.text();
+        throw new Error(`Invalid response format: ${text.substring(0, 50)}`);
       }
-    });
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      // 解析 JSON
+      const result = await response.json();
+      
+      // 验证响应结构
+      if (result?.code === 200 && Array.isArray(result.data)) {
+        return result.data;
+      }
+      
+      throw new Error(result?.message || 'Invalid response structure');
+    } catch (error) {
+      console.error('获取面板列表失败:', error);
+      throw error; // 将错误传递给上层处理
     }
+  };
 
-    const result = await response.json();
-    if (result.code === 200) {
-      return true;
+  const createPanel = async (panelData) => {
+    try {
+      const token = localStorage.getItem('authToken');
+      const response = await fetch(API_BASE_URL, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(panelData)
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      if (result.code === 200) {
+        return result.data;
+      }
+      throw new Error(result.message);
+    } catch (error) {
+      console.error('Error creating panel:', error);
+      throw error;
     }
-    throw new Error(result.message);
-  } catch (error) {
-    console.error('Error deleting panel:', error);
-    throw error;
-  }
-};
+  };
+
+  const updatePanel = async (id, panelData) => {
+    try {
+      const token = localStorage.getItem('authToken');
+      const response = await fetch(`${API_BASE_URL}/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(panelData)
+      });
+
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status} \n ${text}`);
+      }
+      const result = await response.json(); // 直接解析JSON
+      if (!response.ok) throw new Error(result.message);
+      if (result.code === 200) {
+        return result.data;
+      }
+      throw new Error(result.message);
+    } catch (error) {
+      console.error('Error updating panel:', error);
+      throw error;
+    }
+  };
+
+  const deletePanel = async (id) => {
+    try {
+      const token = localStorage.getItem('authToken');
+      const response = await fetch(`${API_BASE_URL}/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      const result = await response.json();
+      if (result.code === 200) {
+        return true;
+      }
+      
+      throw new Error(result.message);
+    } catch (error) {
+      console.error('Error deleting panel:', error);
+      throw error;
+    }
+  };
 
 export default function DeviceManagement() {
   const [panels, setPanels] = useState([]);
@@ -122,7 +138,9 @@ export default function DeviceManagement() {
     location: '',
     ipAddress: '',
     macAddress: '',
-  });  
+    status: 'OFFLINE', // 新增默认状态
+    lastHeartbeat: null // 新增心跳时间
+  });
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -130,15 +148,18 @@ export default function DeviceManagement() {
   useEffect(() => {
     const loadPanels = async () => {
       setIsLoading(true);
+      setError(null);
       try {
         const data = await fetchPanels();
         setPanels(data);
-      } catch (error) {
-        setError('Failed to load panels: ' + error.message);
+      } catch (err) {
+        console.error('设备加载失败:', err);
+        setError(err.message || '无法加载设备列表');
       } finally {
         setIsLoading(false);
       }
     };
+    
     loadPanels();
   }, []);
 
@@ -256,7 +277,6 @@ export default function DeviceManagement() {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">IP Address</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">MAC Address</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Heartbeat</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
               </tr>
@@ -268,13 +288,6 @@ export default function DeviceManagement() {
                   <td className="px-6 py-4 whitespace-nowrap">{panel.location}</td>
                   <td className="px-6 py-4 whitespace-nowrap">{panel.ipAddress}</td>
                   <td className="px-6 py-4 whitespace-nowrap">{panel.macAddress}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full
-                      ${panel.status === 'ONLINE' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}
-                    `}>
-                      {panel.status === 'ONLINE' ? 'Online' : 'Offline'}
-                    </span>
-                  </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     {panel.lastHeartbeat ? new Date(panel.lastHeartbeat).toLocaleString() : 'None'}
                   </td>
