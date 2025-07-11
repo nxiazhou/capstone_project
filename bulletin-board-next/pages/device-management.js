@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import Sidebar from "../components/Sidebar";
+import { useRouter } from 'next/router';
 
   // API 调用函数
   const API_BASE_URL = '/api/panels';
@@ -143,6 +144,7 @@ export default function DeviceManagement() {
   });
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
 
   // 加载面板数据
   useEffect(() => {
@@ -297,6 +299,12 @@ export default function DeviceManagement() {
                       className="text-blue-600 hover:text-blue-900 mr-4"
                     >
                       Edit
+                    </button>
+                    <button
+                      onClick={() => router.push(`/panel-player?panelId=${panel.id}`)}
+                      className="text-green-600 hover:text-green-900 mr-4"
+                    >
+                      View
                     </button>
                     <button
                       onClick={() => handleDelete(panel.id)}

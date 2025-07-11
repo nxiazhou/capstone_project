@@ -6,6 +6,8 @@ export default function ContentManagement() {
   const [isUploading, setIsUploading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [uploadProgress, setUploadProgress] = useState('');
 
   useEffect(() => {
     fetchFiles();
@@ -40,6 +42,8 @@ export default function ContentManagement() {
 
     setIsUploading(true);
     setError('');
+    setSuccess('');
+    setUploadProgress('Uploading and reviewing file...');
 
     try {
       const token = localStorage.getItem('authToken');
@@ -51,14 +55,24 @@ export default function ContentManagement() {
         body: formData
       });
 
-      if (!response.ok) throw new Error("Upload failed");
-
-      await fetchFiles();
+      if (response.ok) {
+        setUploadProgress('Content review passed!');
+        setSuccess('✅ File uploaded and approved by GPT-4o.');
+        await fetchFiles();
+      } else {
+        const errorData = await response.json();
+        setUploadProgress('Content review failed');
+        setError(`❌ Upload failed: ${errorData.message || 'Content review not passed.'}`);
+      }
     } catch (err) {
       console.error('Error uploading file:', err);
-      setError('Failed to upload file');
+      setUploadProgress('Upload failed');
+      setError('❌ Upload failed: Network error or server exception.');
     } finally {
       setIsUploading(false);
+      setTimeout(() => {
+        setUploadProgress('');
+      }, 3000);
     }
   };
 
@@ -76,10 +90,11 @@ export default function ContentManagement() {
 
       if (!response.ok) throw new Error("Delete failed");
 
+      setSuccess('✅ File deleted successfully.');
       await fetchFiles();
     } catch (err) {
       console.error('Error deleting file:', err);
-      setError('Failed to delete file');
+      setError('❌ Failed to delete file.');
     }
   };
 
@@ -99,6 +114,21 @@ export default function ContentManagement() {
           </div>
         )}
 
+        {success && (
+          <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
+            {success}
+          </div>
+        )}
+
+        {uploadProgress && (
+          <div className="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded mb-4">
+            <div className="flex items-center">
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-700 mr-2"></div>
+              {uploadProgress}
+            </div>
+          </div>
+        )}
+
         <div className="flex gap-4 mb-6">
           <input
             type="text"
@@ -107,13 +137,14 @@ export default function ContentManagement() {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
-          <label className="relative cursor-pointer bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
-            {isUploading ? 'Uploading...' : 'Upload File'}
+          <label className="relative cursor-pointer bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed">
+            {isUploading ? 'Reviewing...' : 'Upload File'}
             <input
               type="file"
               className="hidden"
               onChange={handleFileUpload}
               disabled={isUploading}
+              accept="image/*,video/*"
             />
           </label>
         </div>

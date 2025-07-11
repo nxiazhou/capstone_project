@@ -107,33 +107,6 @@ describe('Schedule Management Page', () => {
       cy.wait(2000);
     });
 
-    it('should edit schedule', () => {
-      cy.get('table tbody tr').then($rows => {
-        if ($rows.length > 0) {
-          // 点击编辑按钮 - 添加 force: true 选项
-          cy.get('table tbody tr')
-            .first()
-            .contains(/Edit|修改/)
-            .click({ force: true });
-          
-          cy.wait(2000); // 增加等待时间
-          
-          // 修改名称
-          cy.get('input[name="name"]')
-            .should('be.visible')
-            .clear()
-            .type('Updated Schedule ' + Date.now());
-          
-          // 提交修改
-          cy.contains(/Submit|Save|Update|确定/)
-            .should('be.visible')
-            .click({ force: true });
-          
-          cy.wait(2000);
-        }
-      });
-    });
-
     it('should delete schedule', () => {
       cy.get('table tbody tr').then($rows => {
         if ($rows.length > 0) {

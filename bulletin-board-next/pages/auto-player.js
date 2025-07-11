@@ -31,7 +31,7 @@ export default function AutoPlayer() {
       const fetchPlayCommand = async () => {
         try {
           const token = localStorage.getItem("authToken");
-          const res = await fetch(`/api/panels/${panelId}/play-command`, {
+          const res = await fetch(`/api/schedules/play-command?panelId=${panelId}`, {
             headers: { Authorization: `Bearer ${token}` }
           });
           if (!res.ok) throw new Error("Failed to fetch play command");
@@ -132,6 +132,7 @@ export default function AutoPlayer() {
           src={current.url}
           style={{ maxWidth: "100vw", maxHeight: "100vh" }}
           autoPlay
+          muted
           controls={false}
           onEnded={handleVideoEnded}
         />
