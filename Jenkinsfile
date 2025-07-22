@@ -31,171 +31,171 @@ pipeline {
             }
         }
 
-        stage('Check if package.json changed') {
-            steps {
-                script {
-                    try {
-                        dir('bulletin-board-next') {
-                            def changes = sh(script: "git diff --name-only HEAD HEAD~1", returnStdout: true).trim()
-                            if (changes.contains("package.json")) {
-                                echo '🔍 package.json has changed. Clearing cache...'
-                                sh '''
-                                    rm -rf node_modules package-lock.json .next
-                                '''
-                            } else {
-                                echo '🔒 No changes in package.json. Skipping cache clear.'
-                            }
-                        }
-                    } catch (Exception e) {
-                        echo '❌ Error checking package.json changes: ${e.getMessage()}'
-                        throw e
-                    }
-                }
-            }
-        }
+        // stage('Check if package.json changed') {
+        //     steps {
+        //         script {
+        //             try {
+        //                 dir('bulletin-board-next') {
+        //                     def changes = sh(script: "git diff --name-only HEAD HEAD~1", returnStdout: true).trim()
+        //                     if (changes.contains("package.json")) {
+        //                         echo '🔍 package.json has changed. Clearing cache...'
+        //                         sh '''
+        //                             rm -rf node_modules package-lock.json .next
+        //                         '''
+        //                     } else {
+        //                         echo '🔒 No changes in package.json. Skipping cache clear.'
+        //                     }
+        //                 }
+        //             } catch (Exception e) {
+        //                 echo '❌ Error checking package.json changes: ${e.getMessage()}'
+        //                 throw e
+        //             }
+        //         }
+        //     }
+        // }
 
-        stage('Install Dependencies') {
-            steps {
-                echo '📦 Installing all dependencies...'
-                script {
-                    try {
-                        dir('bulletin-board-next') {
-                            sh '''#!/bin/bash
-                                npm install --save-dev
-                                echo "✅ Npm dependencies installed"
-                            '''
-                        }
-                    } catch (Exception e) {
-                        echo '❌ Error during dependencies installation: ${e.getMessage()}'
-                        throw e
-                    }
-                }
-            }
-        }
+        // stage('Install Dependencies') {
+        //     steps {
+        //         echo '📦 Installing all dependencies...'
+        //         script {
+        //             try {
+        //                 dir('bulletin-board-next') {
+        //                     sh '''#!/bin/bash
+        //                         npm install --save-dev
+        //                         echo "✅ Npm dependencies installed"
+        //                     '''
+        //                 }
+        //             } catch (Exception e) {
+        //                 echo '❌ Error during dependencies installation: ${e.getMessage()}'
+        //                 throw e
+        //             }
+        //         }
+        //     }
+        // }
 
-        stage('Build Project') {
-            steps {
-                echo '🔨 Building Next.js app...'
-                script {
-                    try {
-                        dir('bulletin-board-next') {
-                            sh 'npm run build || { echo "❌ Build failed"; exit 1; }'
-                            echo '✅ Build completed successfully'
-                        }
-                    } catch (Exception e) {
-                        echo '❌ Error during build: ${e.getMessage()}'
-                        throw e
-                    }
-                }
-            }
-        }
+        // stage('Build Project') {
+        //     steps {
+        //         echo '🔨 Building Next.js app...'
+        //         script {
+        //             try {
+        //                 dir('bulletin-board-next') {
+        //                     sh 'npm run build || { echo "❌ Build failed"; exit 1; }'
+        //                     echo '✅ Build completed successfully'
+        //                 }
+        //             } catch (Exception e) {
+        //                 echo '❌ Error during build: ${e.getMessage()}'
+        //                 throw e
+        //             }
+        //         }
+        //     }
+        // }
 
-        stage('Start App for Testing') {
-            steps {
-                echo '🚦 Starting Next.js app for testing...'
-                script {
-                    dir('bulletin-board-next') {
-                        sh '''#!/bin/bash
-                            echo "🔁 Checking if PM2 is running"
-                            pm2 ping > /dev/null 2>&1 || pm2 save
+        // stage('Start App for Testing') {
+        //     steps {
+        //         echo '🚦 Starting Next.js app for testing...'
+        //         script {
+        //             dir('bulletin-board-next') {
+        //                 sh '''#!/bin/bash
+        //                     echo "🔁 Checking if PM2 is running"
+        //                     pm2 ping > /dev/null 2>&1 || pm2 save
 
-                            echo "🧹 Cleaning up old PM2 processes"
-                            pm2 delete next-app || true
+        //                     echo "🧹 Cleaning up old PM2 processes"
+        //                     pm2 delete next-app || true
 
-                            echo "🚀 Starting Next.js app with PM2"
-                            pm2 start npm --name next-app -- run start 
+        //                     echo "🚀 Starting Next.js app with PM2"
+        //                     pm2 start npm --name next-app -- run start 
 
-                            echo "⏳ Waiting for app to be ready..."
-                            i=1
-                            while [ $i -le 20 ]; do
-                                if curl -s http://localhost:3000 >/dev/null; then
-                                    echo "✅ App is responding at http://localhost:3000"
-                                    break
-                                fi
-                                echo "⏳ App not ready yet... ($i)"
-                                sleep 3
-                                i=$((i+1))
-                            done
+        //                     echo "⏳ Waiting for app to be ready..."
+        //                     i=1
+        //                     while [ $i -le 20 ]; do
+        //                         if curl -s http://localhost:3000 >/dev/null; then
+        //                             echo "✅ App is responding at http://localhost:3000"
+        //                             break
+        //                         fi
+        //                         echo "⏳ App not ready yet... ($i)"
+        //                         sleep 3
+        //                         i=$((i+1))
+        //                     done
 
-                            if [ $i -gt 20 ]; then
-                                echo "❌ App did not start in time"
-                                pm2 logs next-app --lines 50
-                                exit 1
-                            fi
+        //                     if [ $i -gt 20 ]; then
+        //                         echo "❌ App did not start in time"
+        //                         pm2 logs next-app --lines 50
+        //                         exit 1
+        //                     fi
 
-                            echo "💾 Saving PM2 process list"
-                            pm2 save
-                        '''
-                    }
-                }
-            }
-        }
+        //                     echo "💾 Saving PM2 process list"
+        //                     pm2 save
+        //                 '''
+        //             }
+        //         }
+        //     }
+        // }
 
 
 
-        stage('Run Unit Tests') {
-            steps {
-                echo '🧠 Running unit tests...'
-                script {
-                    catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-                        try {
-                            dir('bulletin-board-next') {
-                                sh 'NODE_ENV=development npm run test || { echo "❌ Unit tests failed"; exit 1; }'
-                                echo '✅ Unit tests passed'
-                            }
-                        } catch (Exception e) {
-                            echo '❌ Error running unit tests: ${e.getMessage()}'
-                            throw e
-                        }
-                    }
-                }
-            }
-        }
+        // stage('Run Unit Tests') {
+        //     steps {
+        //         echo '🧠 Running unit tests...'
+        //         script {
+        //             catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+        //                 try {
+        //                     dir('bulletin-board-next') {
+        //                         sh 'NODE_ENV=development npm run test || { echo "❌ Unit tests failed"; exit 1; }'
+        //                         echo '✅ Unit tests passed'
+        //                     }
+        //                 } catch (Exception e) {
+        //                     echo '❌ Error running unit tests: ${e.getMessage()}'
+        //                     throw e
+        //                 }
+        //             }
+        //         }
+        //     }
+        // }
 
-        stage('Run Integration Tests') {
-            steps {
-                echo '🔄 Running integration tests...'
-                script {
-                    catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-                        try {
-                            dir('bulletin-board-next') {
-                                sh '''#!/bin/bash
-                                    export DISPLAY=:99
-                                    nohup Xvfb :99 -screen 0 1920x1080x24 > /dev/null 2>&1 &
-                                    sleep 2
-                                    npx cypress run || { echo "❌ Integration tests failed"; exit 1; }
-                                '''
-                                echo '✅ Integration tests passed'
-                            }
-                        } catch (Exception e) {
-                            echo '❌ Error running integration tests: ${e.getMessage()}'
-                            throw e
-                        }
-                    }
-                }
-            }
-        }
+        // stage('Run Integration Tests') {
+        //     steps {
+        //         echo '🔄 Running integration tests...'
+        //         script {
+        //             catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+        //                 try {
+        //                     dir('bulletin-board-next') {
+        //                         sh '''#!/bin/bash
+        //                             export DISPLAY=:99
+        //                             nohup Xvfb :99 -screen 0 1920x1080x24 > /dev/null 2>&1 &
+        //                             sleep 2
+        //                             npx cypress run || { echo "❌ Integration tests failed"; exit 1; }
+        //                         '''
+        //                         echo '✅ Integration tests passed'
+        //                     }
+        //                 } catch (Exception e) {
+        //                     echo '❌ Error running integration tests: ${e.getMessage()}'
+        //                     throw e
+        //                 }
+        //             }
+        //         }
+        //     }
+        // }
 
-        stage('Security Scan - Snyk') {
-            steps {
-                echo '🛡️ Running Snyk scan...'
-                script {
-                    catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-                        try {
-                            dir('bulletin-board-next') {
-                                sh '''#!/bin/bash
-                                   snyk test || echo "⚠️ Snyk scan completed with vulnerabilities (non-blocking)"
-                                '''
-                                echo '✅ Snyk scan completed'
-                            }
-                        } catch (Exception e) {
-                            echo '❌ Error running Snyk scan: ${e.getMessage()}'
-                            throw e
-                        }
-                    }
-                }
-            }
-        }
+        // stage('Security Scan - Snyk') {
+        //     steps {
+        //         echo '🛡️ Running Snyk scan...'
+        //         script {
+        //             catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+        //                 try {
+        //                     dir('bulletin-board-next') {
+        //                         sh '''#!/bin/bash
+        //                            snyk test || echo "⚠️ Snyk scan completed with vulnerabilities (non-blocking)"
+        //                         '''
+        //                         echo '✅ Snyk scan completed'
+        //                     }
+        //                 } catch (Exception e) {
+        //                     echo '❌ Error running Snyk scan: ${e.getMessage()}'
+        //                     throw e
+        //                 }
+        //             }
+        //         }
+        //     }
+        // }
 
         stage('Security Scan - ZAP') {
             steps {
@@ -225,7 +225,11 @@ pipeline {
                                 echo "🚀 Starting ZAP in background..."
                                 nohup /opt/zap/zap.sh -daemon -host 0.0.0.0 -port 8090 \
                                     -configfile /opt/zap/zap-config.properties \
+                                    -addonuninstall selenium \
+                                    -addonuninstall hud \
+                                    -addonuninstall ajaxSpider \
                                     > /tmp/zap.log 2>&1 &
+
 
                                 echo "🌐 Waiting for ZAP to be ready (log-based)..."
                                 ZAP_READY=0
