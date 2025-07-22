@@ -24,8 +24,12 @@ export default function ContentReview() {
       });
 
       if (!response.ok) throw new Error("Failed to fetch review history");
-
+      // console.log(JSON.stringify(response));
+      
       const files = await response.json();
+      // console.log(files);
+      // console.log(response)
+      
       setReviewHistory(files);
     } catch (err) {
       console.error('Error fetching review history:', err);

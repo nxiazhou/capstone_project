@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef  } from 'react';
 import Sidebar from "../components/Sidebar";
 
 export default function ContentManagement() {
@@ -8,6 +8,7 @@ export default function ContentManagement() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [uploadProgress, setUploadProgress] = useState('');
+  const fileInputRef = useRef(null); // ✅ 用于访问 input 元素
 
   useEffect(() => {
     fetchFiles();
@@ -49,30 +50,29 @@ export default function ContentManagement() {
       const token = localStorage.getItem('authToken');
       const response = await fetch('/api/files/upload', {
         method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`
-        },
+        headers: { Authorization: `Bearer ${token}` },
         body: formData
       });
 
-      if (response.ok) {
-        setUploadProgress('Content review passed!');
+      const result = await response.json();
+
+      // ✅ 同时判断 HTTP 和业务状态码
+      if (response.ok && result.code === 200) {
         setSuccess('✅ File uploaded and approved by GPT-4o.');
         await fetchFiles();
       } else {
-        const errorData = await response.json();
-        setUploadProgress('Content review failed');
-        setError(`❌ Upload failed: ${errorData.message || 'Content review not passed.'}`);
+        setError('❌ Content review finished, content is illegal!');
+        await fetchFiles();
       }
     } catch (err) {
-      console.error('Error uploading file:', err);
-      setUploadProgress('Upload failed');
-      setError('❌ Upload failed: Network error or server exception.');
+      setError('❌ Upload failed: Network error');
     } finally {
       setIsUploading(false);
-      setTimeout(() => {
-        setUploadProgress('');
-      }, 3000);
+      setUploadProgress('');
+
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }
   };
 
@@ -141,6 +141,7 @@ export default function ContentManagement() {
             {isUploading ? 'Reviewing...' : 'Upload File'}
             <input
               type="file"
+              ref={fileInputRef}
               className="hidden"
               onChange={handleFileUpload}
               disabled={isUploading}
