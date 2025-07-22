@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useRouter } from "next/router";
 import Sidebar from "../components/Sidebar";
+import Image from "next/image";
 
 export default function PanelPlayer() {
   const router = useRouter();
@@ -95,7 +96,7 @@ export default function PanelPlayer() {
       setNoPlayable(true);
       setLoading(false);
     }
-  }, [panelId]);
+  }, [panelId, scheduleTimer]);
 
   // 首次加载和panelId变化时拉取
   useEffect(() => {
@@ -103,7 +104,7 @@ export default function PanelPlayer() {
     return () => {
       if (scheduleTimer) clearTimeout(scheduleTimer);
     };
-  }, [fetchAndHandleSchedule]);
+  }, [fetchAndHandleSchedule, scheduleTimer]);
 
   // 自动轮播
   const handleNext = useCallback(() => {
@@ -152,7 +153,7 @@ export default function PanelPlayer() {
     if (now >= end) {
       fetchAndHandleSchedule();
     }
-  }, [currentSchedule, contents]);
+  }, [currentSchedule, contents, fetchAndHandleSchedule]);
 
   if (loading) {
     return (
@@ -211,7 +212,7 @@ export default function PanelPlayer() {
               onEnded={handleVideoEnded}
             />
           ) : (
-            <img
+            <Image
               src={current.url}
               alt={current.name}
               style={{ maxWidth: "100vw", maxHeight: "80vh", objectFit: "contain" }}

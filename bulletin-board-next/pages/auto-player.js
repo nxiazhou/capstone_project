@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useRouter } from "next/router";
+import Image from "next/image";
 
 export default function AutoPlayer() {
   const router = useRouter();
@@ -137,7 +138,7 @@ export default function AutoPlayer() {
           onEnded={handleVideoEnded}
         />
       ) : (
-        <img
+        <Image
           src={current.url}
           alt={current.name}
           style={{ maxWidth: "100vw", maxHeight: "100vh", objectFit: "contain" }}

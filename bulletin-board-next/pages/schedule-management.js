@@ -302,7 +302,7 @@ export default function ScheduleManagement() {
     } finally {
       setLoading(false);
     }
-  }, [currentPage, pageSize, searchKeyword, dateFilter]);
+  }, [currentPage, pageSize, searchKeyword, dateFilter, currentPage, pageSize]);
 
   useEffect(() => {
     fetchSchedules();
@@ -348,7 +348,7 @@ export default function ScheduleManagement() {
       fetchContents();
       fetchPanels(); // 新增：弹窗打开时自动加载面板列表
     }
-  }, [showForm, selectedSchedule]);
+  }, [showForm, selectedSchedule, fetchPanels]);
 
   const handleSearchChange = (e) => {
     setSearchKeyword(e.target.value);
