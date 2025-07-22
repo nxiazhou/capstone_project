@@ -367,6 +367,8 @@ npm run dev
 
 ## 3.Zaproxy
 
+采用后台守护进程的方式来运行zap
+
 检查端口占用:
 
     netstat -tulnp | grep 8090
