@@ -207,28 +207,28 @@ pipeline {
                                 echo $0
                                 set -e
 
-                                // echo "🧹 Killing old ZAP..."
-                                // PIDS=$(ps aux | grep '[j]ava.*zap' | awk '{print $2}')
-                                // if [ -n "$PIDS" ]; then
-                                //     echo "🧹 Killing ZAP processes: $PIDS"
-                                //     for PID in $PIDS; do
-                                //         kill -9 "$PID" && echo "✅ Killed ZAP process $PID"
-                                //     done
-                                // else
-                                //     echo "⚠️ No ZAP process found"
-                                // fi
+                                #echo "🧹 Killing old ZAP..."
+                                #PIDS=$(ps aux | grep '[j]ava.*zap' | awk '{print $2}')
+                                #if [ -n "$PIDS" ]; then
+                                    #echo "🧹 Killing ZAP processes: $PIDS"
+                                    #for PID in $PIDS; do
+                                        #kill -9 "$PID" && echo "✅ Killed ZAP process $PID"
+                                    #done
+                                #else
+                                    #echo "⚠️ No ZAP process found"
+                                #fi
 
-                                // echo "🧹 Cleaning old logs and session..."
-                                // rm -rf /root/.ZAP/
-                                // rm -f /tmp/zap.log
+                                #echo "🧹 Cleaning old logs and session..."
+                                #rm -rf /root/.ZAP/
+                                #rm -f /tmp/zap.log
 
-                                // echo "🚀 Starting ZAP in background..."
-                                // nohup /opt/zap/zap.sh -daemon -host 0.0.0.0 -port 8090 \
-                                //     -configfile /opt/zap/zap-config.properties \
-                                //     -addonuninstall selenium \
-                                //     -addonuninstall hud \
-                                //     -addonuninstall ajaxSpider \
-                                //     > /tmp/zap.log 2>&1 &
+                                #echo "🚀 Starting ZAP in background..."
+                                #nohup /opt/zap/zap.sh -daemon -host 0.0.0.0 -port 8090 \
+                                    #-configfile /opt/zap/zap-config.properties \
+                                    #-addonuninstall selenium \
+                                    #-addonuninstall hud \
+                                    #-addonuninstall ajaxSpider \
+                                    #> /tmp/zap.log 2>&1 &
 
 
                                 echo "🌐 Waiting for ZAP to be ready (log-based)..."
