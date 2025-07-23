@@ -373,6 +373,48 @@ npm run dev
 
     netstat -tulnp | grep 8090
 
+手动启动命令：
+
+     nohup /opt/zap/zap.sh -daemon -host 0.0.0.0 -port 8090 \
+        -configfile /opt/zap/zap-config.properties \
+        -addonuninstall selenium \
+        -addonuninstall hud \
+        -addonuninstall ajaxSpider \
+        > /tmp/zap.log 2>&1 &
+
+自动恢复服务的脚本：
+
+    bash /root/zap-keepalive.sh
+
+/root/zap-keepalive.sh脚本的内容：
+
+    #!/bin/bash
+
+    # 检查是否已有 ZAP 进程在运行
+    PIDS=$(ps aux | grep '[j]ava.*zap' | awk '{print $2}')
+
+    if [ -n "$PIDS" ]; then
+    echo "✅ ZAP is already running with PID(s): $PIDS"
+    exit 0
+    else
+    echo "⚠️ ZAP is not running, restarting..."
+
+    # 清除旧日志
+    rm -f /tmp/zap.log
+
+    # 后台启动 ZAP
+    nohup /opt/zap/zap.sh -daemon \
+        -host 0.0.0.0 \
+        -port 8090 \
+        -configfile /opt/zap/zap-config.properties \
+        -addonuninstall selenium \
+        -addonuninstall hud \
+        -addonuninstall ajaxSpider \
+        > /tmp/zap.log 2>&1 &
+
+    echo "🚀 ZAP restarted in background. Log: /tmp/zap.log"
+    fi
+
 /opt/zap/zap-config.properties
 
     # ✅ 启用 API 无需密钥
