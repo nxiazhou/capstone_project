@@ -13,8 +13,12 @@ export default function PanelPlayer() {
   const [loading, setLoading] = useState(true);
   const [noPlayable, setNoPlayable] = useState(false);
   const [scheduleTimer, setScheduleTimer] = useState(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [showControls, setShowControls] = useState(true);
+  const [controlsTimeout, setControlsTimeout] = useState(null);
   const videoRef = useRef(null);
   const imageTimerRef = useRef(null);
+  const containerRef = useRef(null);
 
   // 拉取所有Schedule并处理逻辑（兼容无panels字段）
   const fetchAndHandleSchedule = useCallback(async () => {
@@ -155,12 +159,56 @@ export default function PanelPlayer() {
     }
   }, [currentSchedule, contents, fetchAndHandleSchedule]);
 
+  // 全屏切换逻辑
+  const handleMouseMove = () => {
+    setShowControls(true);
+    if (controlsTimeout) clearTimeout(controlsTimeout);
+    const timeout = setTimeout(() => {
+      if (isFullscreen) setShowControls(false);
+    }, 3000);
+    setControlsTimeout(timeout);
+  };
+
+  const toggleFullscreen = async () => {
+    if (!isFullscreen) {
+      try {
+        if (containerRef.current.requestFullscreen) await containerRef.current.requestFullscreen();
+        setIsFullscreen(true);
+      } catch (err) {
+        console.error("Fullscreen error:", err);
+      }
+    } else {
+      try {
+        if (document.exitFullscreen) await document.exitFullscreen();
+        setIsFullscreen(false);
+      } catch (err) {
+        console.error("Exit fullscreen error:", err);
+      }
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex min-h-screen">
         <Sidebar />
-        <div className="flex-1 flex items-center justify-center bg-black text-white text-2xl">
-          Loading...
+        <div className="flex-1 bg-black flex flex-col items-center justify-center relative">
+          {/* Exit Player 按钮 */}
+          <button
+            onClick={() => router.push('/device-management')}
+            className="absolute top-4 left-4 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 z-10"
+          >
+            Exit Player
+          </button>
+          {/* 全屏按钮 */}
+          <button
+            onClick={toggleFullscreen}
+            className={`absolute top-4 right-4 bg-gray-800 text-white px-3 py-1 rounded hover:bg-gray-700 z-10`}
+          >
+            {isFullscreen ? '⤓ Exit Fullscreen' : '⤢ Fullscreen'}
+          </button>
+          <div className="flex-1 flex items-center justify-center w-full h-full">
+            <span className="text-white text-2xl">Loading...</span>
+          </div>
         </div>
       </div>
     );
@@ -178,6 +226,13 @@ export default function PanelPlayer() {
           >
             Exit Player
           </button>
+          {/* 全屏按钮 */}
+          <button
+            onClick={toggleFullscreen}
+            className={`absolute top-4 right-4 bg-gray-800 text-white px-3 py-1 rounded hover:bg-gray-700 z-10`}
+          >
+            {isFullscreen ? '⤓ Exit Fullscreen' : '⤢ Fullscreen'}
+          </button>
           <div className="flex-1 flex items-center justify-center w-full h-full">
             <span className="text-white text-2xl">No schedule for this panel at this time.</span>
           </div>
@@ -191,13 +246,24 @@ export default function PanelPlayer() {
   return (
     <div className="flex min-h-screen">
       <Sidebar />
-      <div className="flex-1 bg-black flex flex-col items-center justify-center relative">
+      <div
+        ref={containerRef}
+        className="flex-1 bg-black flex flex-col items-center justify-center relative"
+        onMouseMove={handleMouseMove}
+      >
         {/* Exit Player 按钮 */}
         <button
           onClick={() => router.push('/device-management')}
-          className="absolute top-4 left-4 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 z-10"
+          className={`absolute top-4 left-4 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 z-10 ${isFullscreen && !showControls ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}
         >
           Exit Player
+        </button>
+        {/* 全屏按钮 */}
+        <button
+          onClick={toggleFullscreen}
+          className={`absolute top-4 right-4 bg-gray-800 text-white px-3 py-1 rounded hover:bg-gray-700 z-10 ${isFullscreen && !showControls ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}
+        >
+          {isFullscreen ? '⤓ Exit Fullscreen' : '⤢ Fullscreen'}
         </button>
         {/* 播放区 */}
         <div className="w-full flex flex-col items-center justify-center" style={{ height: 'calc(100vh - 120px)' }}>
@@ -219,7 +285,9 @@ export default function PanelPlayer() {
             />
           )}
         </div>
-        <div className="w-full max-w-4xl bg-gray-800 p-4 flex flex-col gap-4">
+        <div
+          className={`w-full max-w-4xl bg-gray-800 p-4 flex flex-col gap-4 transition-opacity duration-300 ${isFullscreen && !showControls ? 'opacity-0' : 'opacity-100'}`}
+        >
           <div className="flex items-center justify-between text-white">
             <div className="flex items-center space-x-4">
               <button onClick={handlePrevious} className="p-2 hover:bg-gray-700 rounded">⏮️</button>

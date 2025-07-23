@@ -145,6 +145,7 @@ export default function DeviceManagement() {
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const role = typeof window !== "undefined" ? localStorage.getItem('authRole') : null;
 
   // 加载面板数据
   useEffect(() => {
@@ -294,24 +295,35 @@ export default function DeviceManagement() {
                     {panel.lastHeartbeat ? new Date(panel.lastHeartbeat).toLocaleString() : 'None'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm">
-                    <button
-                      onClick={() => handleOpenModal(panel)}
-                      className="text-blue-600 hover:text-blue-900 mr-4"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => router.push(`/panel-player?panelId=${panel.id}`)}
-                      className="text-green-600 hover:text-green-900 mr-4"
-                    >
-                      View
-                    </button>
-                    <button
-                      onClick={() => handleDelete(panel.id)}
-                      className="text-red-600 hover:text-red-900"
-                    >
-                      Delete
-                    </button>
+                    {role === 'admin' ? (
+                      <>
+                        <button
+                          onClick={() => handleOpenModal(panel)}
+                          className="text-blue-600 hover:text-blue-900 mr-4"
+                        >
+                          Edit
+                        </button>
+                        <a
+                          href={`/panel-player?panelId=${panel.id}`}
+                          className="text-green-600 hover:underline mr-4"
+                        >
+                          View
+                        </a>
+                        <button
+                          onClick={() => handleDelete(panel.id)}
+                          className="text-red-600 hover:text-red-900"
+                        >
+                          Delete
+                        </button>
+                      </>
+                    ) : (
+                      <a
+                        href={`/panel-player?panelId=${panel.id}`}
+                        className="text-green-600 hover:underline"
+                      >
+                        View
+                      </a>
+                    )}
                   </td>
                 </tr>
               ))}

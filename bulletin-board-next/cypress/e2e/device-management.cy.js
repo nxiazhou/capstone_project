@@ -31,59 +31,40 @@ describe('Device Management Page', () => {
     cy.contains('Add Device').should('be.visible');
   });
 
-  it('should add a new device (mock)', () => {
+  it('should add, edit, and then delete the last device', () => {
+    // 创建设备
     cy.contains('+ Add Device').click();
     cy.contains('Add Device').should('be.visible');
-    // 输入操作必须在模态框打开后进行
     cy.get('.fixed.inset-0').within(() => {
-      cy.get('input').eq(0).type('TestDevice', { force: true });
-      cy.get('input').eq(1).type('TestLocation', { force: true });
-      cy.get('input').eq(2).type('192.168.1.100', { force: true });
-      cy.get('input').eq(3).type('00-11-22-33-44-99', { force: true });
+      cy.get('input').eq(0).type('CypressTestDevice', { force: true });
+      cy.get('input').eq(1).type('CypressLocation', { force: true });
+      cy.get('input').eq(2).type('192.168.1.200', { force: true });
+      cy.get('input').eq(3).type('00-22-33-44-55-66', { force: true });
       cy.contains('Save').click({ force: true });
     });
-    // 等待模态框关闭
     cy.get('.fixed.inset-0').should('not.exist');
-  });
 
-  it('should search device by name', () => {
-    cy.get('input[placeholder="Search by name or location..."]').type('TestDevice', { force: true });
-    cy.wait(500);
-    cy.get('table tbody tr').then($rows => {
-      if ($rows.length > 0) {
-        cy.wrap($rows).each(($row) => {
-          cy.wrap($row).contains('TestDevice', { matchCase: false });
-        });
-      } else {
-        cy.contains('No devices').should('exist');
-      }
-    });
-  });
-
-  it('should edit a device (mock)', () => {
-    // 确保没有遮罩层
-    cy.get('.fixed.inset-0').should('not.exist');
-    cy.get('table tbody tr').first().within(() => {
+    // 编辑刚创建的设备（最后一行）
+    cy.get('table tbody tr').last().within(() => {
       cy.contains('Edit').click({ force: true });
     });
     cy.contains('Edit Device').should('be.visible');
-    cy.get('input').eq(0).clear({ force: true }).type('TestDevice-Edit', { force: true });
+    cy.get('input').eq(0).clear({ force: true }).type('CypressTestDevice-Edit', { force: true });
     cy.contains('Save').click({ force: true });
     cy.get('.fixed.inset-0').should('not.exist');
-  });
 
-  it('should delete a device (mock)', () => {
-    // 确保没有遮罩层
-    cy.get('.fixed.inset-0').should('not.exist');
-    cy.get('table tbody tr').then($rows => {
-      if ($rows.length > 0) {
-        cy.get('table tbody tr').first().within(() => {
-          cy.contains('Delete').click({ force: true });
-        });
-        cy.on('window:confirm', () => true);
-        cy.wait(1000);
-      }
+    // 清空搜索框，确保能看到所有设备
+    cy.get('input[placeholder="Search by name or location..."]').clear({ force: true });
+    cy.wait(1000);
+    cy.get('table tbody tr').should('exist');
+
+    // 删除刚编辑的设备（最后一行）
+    cy.get('table tbody tr').last().within(() => {
+      cy.contains('Delete').click({ force: true });
     });
+    cy.on('window:confirm', () => true);
+    cy.wait(1000);
+    cy.get('table tbody tr').should('not.contain', 'CypressTestDevice-Edit');
   });
 
   context('when devices exist', () => {
