@@ -280,7 +280,6 @@ export default function DeviceManagement() {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">IP Address</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">MAC Address</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Heartbeat</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
@@ -291,9 +290,6 @@ export default function DeviceManagement() {
                   <td className="px-6 py-4 whitespace-nowrap">{panel.location}</td>
                   <td className="px-6 py-4 whitespace-nowrap">{panel.ipAddress}</td>
                   <td className="px-6 py-4 whitespace-nowrap">{panel.macAddress}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    {panel.lastHeartbeat ? new Date(panel.lastHeartbeat).toLocaleString() : 'None'}
-                  </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm">
                     {role === 'admin' ? (
                       <>

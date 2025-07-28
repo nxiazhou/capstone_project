@@ -337,7 +337,7 @@ export default function ScheduleManagement() {
           }
           // 设置已选 panelIds
           if (selectedSchedule?.panels) {
-            setSelectedPanelIds(selectedSchedule.panels.map((p) => p.id));
+            setSelectedPanelIds(selectedSchedule.panels.map((p) => p.panelId));
           } else {
             setSelectedPanelIds([]);
           }

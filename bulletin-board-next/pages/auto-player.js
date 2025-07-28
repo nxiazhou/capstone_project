@@ -141,6 +141,8 @@ export default function AutoPlayer() {
         <Image
           src={current.url}
           alt={current.name}
+          width={1280}
+          height={720}
           style={{ maxWidth: "100vw", maxHeight: "100vh", objectFit: "contain" }}
         />
       )}

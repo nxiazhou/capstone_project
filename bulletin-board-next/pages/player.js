@@ -167,7 +167,7 @@ export default function Player() {
           {isFullscreen ? '⤓ Exit Fullscreen' : '⤢ Fullscreen'}
         </button>
 
-        <div className="relative w-full" style={{ height: 'calc(100vh - 120px)' }}>
+        <div className="relative w-full h-full flex items-center justify-center" style={{ height: 'calc(100vh - 120px)' }}>
           {currentContent.mediaType === 'video' ? (
             <video
               ref={videoRef}
@@ -178,16 +178,22 @@ export default function Player() {
               playsInline
             />
           ) : (
-            <Image
-              key={currentContent.url}
-              src={currentContent.url}
-              alt={currentContent.name}
-              fill
-              sizes="(min-width: 1280px) 85vw, 100vw"
-              style={{ objectFit: 'contain' }}
-              priority
-              onError={() => handleNext()} // 图片加载失败时自动跳过
-            />
+            <div className="w-full h-full flex items-center justify-center">
+              <Image
+                key={currentContent.url}
+                src={currentContent.url}
+                alt={currentContent.name}
+                width={1920}
+                height={1080}
+                style={{ 
+                  width: "100%", 
+                  height: "100%", 
+                  objectFit: isFullscreen ? "cover" : "contain"
+                }}
+                priority
+                onError={() => handleNext()}
+              />
+            </div>
           )}
         </div>
 
