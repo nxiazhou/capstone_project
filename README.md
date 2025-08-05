@@ -2,13 +2,11 @@
 
 GitHub 仓库地址：👉 https://github.com/nxiazhou/capstone_project
 
-旧前端地址：http://52.221.51.195:3000/login
-
-新前端地址:http://47.97.211.83:3000/login
+新前端地址:http://116.62.64.33:3000/login
 
 Kubernetes前端地址:http://120.26.162.244/
 
-Jenkins地址:http://47.97.211.83:8080
+Jenkins地址:http://116.62.64.33:8080
 
     username:dddd    password:Dddd2025
 
@@ -35,11 +33,11 @@ Jenkins地址:http://47.97.211.83:8080
 
 本地ssh命令:
 
-    ssh -i "C:/develop/ssh/new_key" root@47.97.211.83
+    ssh -i "C:/develop/ssh/new_key" root@116.62.64.33
 
 windows本地上传linux命令
 
-    scp -i "C:/develop/ssh/new_key" C:/develop/ssh/jenkins-plugins-2.504.2.zip root@47.97.211.83:/var/lib/jenkins/jenkins-plugins-2.504.2.zip
+    scp -i "C:/develop/ssh/new_key" C:/develop/ssh/jenkins-plugins-2.504.2.zip root@116.62.64.33:/var/lib/jenkins/jenkins-plugins-2.504.2.zip
 
 jenkins工作目录（Docker容器外）:   
 
@@ -368,6 +366,10 @@ npm run dev
 ## 3.Zaproxy
 
 采用后台守护进程的方式来运行zap服务
+
+开机后启动的命令:
+
+    service cron start
 
 检查端口占用:
 
