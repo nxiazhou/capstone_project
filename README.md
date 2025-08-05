@@ -2,7 +2,7 @@
 
 GitHub 仓库地址：👉 https://github.com/nxiazhou/capstone_project
 
-新前端地址:http://116.62.64.33:3000/login
+前端地址:http://116.62.64.33:3000/login
 
 Kubernetes前端地址:http://120.26.162.244/
 
