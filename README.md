@@ -2,13 +2,11 @@
 
 GitHub 仓库地址：👉 https://github.com/nxiazhou/capstone_project
 
-旧前端地址：http://52.221.51.195:3000/login
-
-新前端地址:http://47.97.211.83:3000/login
+前端地址:http://116.62.64.33:3000/login
 
 Kubernetes前端地址:http://120.26.162.244/
 
-Jenkins地址:http://47.97.211.83:8080
+Jenkins地址:http://116.62.64.33:8080
 
     username:dddd    password:Dddd2025
 
@@ -35,11 +33,11 @@ Jenkins地址:http://47.97.211.83:8080
 
 本地ssh命令:
 
-    ssh -i "C:/develop/ssh/new_key" root@47.97.211.83
+    ssh -i "C:/develop/ssh/new_key" root@116.62.64.33
 
 windows本地上传linux命令
 
-    scp -i "C:/develop/ssh/new_key" C:/develop/ssh/jenkins-plugins-2.504.2.zip root@47.97.211.83:/var/lib/jenkins/jenkins-plugins-2.504.2.zip
+    scp -i "C:/develop/ssh/new_key" C:/develop/ssh/jenkins-plugins-2.504.2.zip root@116.62.64.33:/var/lib/jenkins/jenkins-plugins-2.504.2.zip
 
 jenkins工作目录（Docker容器外）:   
 
@@ -369,9 +367,55 @@ npm run dev
 
 采用后台守护进程的方式来运行zap服务
 
+开机后启动的命令:
+
+    service cron start
+
 检查端口占用:
 
     netstat -tulnp | grep 8090
+
+手动启动命令：
+
+     nohup /opt/zap/zap.sh -daemon -host 0.0.0.0 -port 8090 \
+        -configfile /opt/zap/zap-config.properties \
+        -addonuninstall selenium \
+        -addonuninstall hud \
+        -addonuninstall ajaxSpider \
+        > /tmp/zap.log 2>&1 &
+
+自动恢复服务的脚本：
+
+    bash /root/zap-keepalive.sh
+
+/root/zap-keepalive.sh脚本的内容：
+
+    #!/bin/bash
+
+    # 检查是否已有 ZAP 进程在运行
+    PIDS=$(ps aux | grep '[j]ava.*zap' | awk '{print $2}')
+
+    if [ -n "$PIDS" ]; then
+    echo "✅ ZAP is already running with PID(s): $PIDS"
+    exit 0
+    else
+    echo "⚠️ ZAP is not running, restarting..."
+
+    # 清除旧日志
+    rm -f /tmp/zap.log
+
+    # 后台启动 ZAP
+    nohup /opt/zap/zap.sh -daemon \
+        -host 0.0.0.0 \
+        -port 8090 \
+        -configfile /opt/zap/zap-config.properties \
+        -addonuninstall selenium \
+        -addonuninstall hud \
+        -addonuninstall ajaxSpider \
+        > /tmp/zap.log 2>&1 &
+
+    echo "🚀 ZAP restarted in background. Log: /tmp/zap.log"
+    fi
 
 /opt/zap/zap-config.properties
 
