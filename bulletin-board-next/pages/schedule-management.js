@@ -80,7 +80,8 @@ export default function ScheduleManagement() {
               id: schedule.id,
               name: schedule.name,
               panels: schedule.panels || [],
-              contentCount: schedule.contentCount || 0
+              contentCount: schedule.contentCount || 0,
+              panelCount: schedule.panelCount || (schedule.panels ? schedule.panels.length : 0)
             });
           }
         });
@@ -140,7 +141,8 @@ export default function ScheduleManagement() {
             timetable[dayName][slot.label].push({
               id: schedule.id,
               name: schedule.name,
-              contentCount: schedule.contentCount || 0
+              contentCount: schedule.contentCount || 0,
+              panelCount: schedule.panelCount || (schedule.panels ? schedule.panels.length : 0)
             });
           }
         });
@@ -286,13 +288,33 @@ export default function ScheduleManagement() {
           });
           if (!detailRes.ok) return sch;
           const detail = await detailRes.json();
-          return { ...sch, panels: detail.panels || [] };
+          return { 
+            ...sch, 
+            panels: detail.panels || [],
+            contents: detail.contents || [],
+            // 优先使用后端返回的count，如果没有则从详情中计算
+            contentCount: sch.contentCount || (detail.contents ? detail.contents.length : 0),
+            panelCount: sch.panelCount || (detail.panels ? detail.panels.length : 0)
+          };
         } catch {
           return sch;
         }
       });
 
       const schedulesWithPanels = await Promise.all(detailPromises);
+
+      // 添加调试信息
+      console.log("📋 处理后的调度数据：", schedulesWithPanels);
+      if (schedulesWithPanels.length > 0) {
+        console.log("📊 第一个调度的count信息：", {
+          id: schedulesWithPanels[0].id,
+          name: schedulesWithPanels[0].name,
+          contentCount: schedulesWithPanels[0].contentCount,
+          panelCount: schedulesWithPanels[0].panelCount,
+          contentsLength: schedulesWithPanels[0].contents?.length,
+          panelsLength: schedulesWithPanels[0].panels?.length
+        });
+      }
 
       setSchedules(schedulesWithPanels);
       setTotalPages(data.totalPages);
@@ -621,8 +643,8 @@ export default function ScheduleManagement() {
                           <td className="py-3 px-4">{schedule.name}</td>
                           <td className="py-3 px-4">{new Date(schedule.startTime).toLocaleString()}</td>
                           <td className="py-3 px-4">{new Date(schedule.endTime).toLocaleString()}</td>
-                          <td className="py-3 px-4">{schedule.contentCount}</td>
-                          <td className="py-3 px-4">{schedule.panelCount}</td>
+                          <td className="py-3 px-4">{schedule.contentCount || 0}</td>
+                          <td className="py-3 px-4">{schedule.panelCount || 0}</td>
                           <td className="py-3 px-4 space-x-2">
                             {role === 'admin' && (
                               <>
@@ -721,12 +743,12 @@ export default function ScheduleManagement() {
                                   {schedule.name}
                                 </div>
                                 <div className="text-blue-600">
-                                  Content: {schedule.contentCount} items
+                                  Content: {schedule.contentCount || 0} items
                                 </div>
                                 <div className="text-blue-600">
-                                  Panels: {schedule.panels.length} panels
+                                  Panels: {schedule.panels ? schedule.panels.length : 0} panels
                                 </div>
-                                {schedule.panels.length > 0 && (
+                                {schedule.panels && schedule.panels.length > 0 && (
                                   <div className="text-blue-500 text-xs mt-1">
                                     {schedule.panels.slice(0, 2).map(p => p.name || p.id).join(', ')}
                                     {schedule.panels.length > 2 && '...'}
@@ -807,7 +829,7 @@ export default function ScheduleManagement() {
                                   {schedule.name}
                                 </div>
                                 <div className="text-green-600">
-                                  Content: {schedule.contentCount} items
+                                  Content: {schedule.contentCount || 0} items
                                 </div>
                               </div>
                             ))}
