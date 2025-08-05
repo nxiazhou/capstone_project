@@ -2,6 +2,11 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { useRouter } from "next/router";
 import Image from "next/image";
 
+// 自动注入token（只在本地调试时使用！）
+if (typeof window !== "undefined") {
+  localStorage.setItem("authToken", "eyJhbGciOiJIUzUxMiJ9.eyJyb2xlIjoiYWRtaW4iLCJ1c2VySWQiOjEsInN1YiI6IkFkbWluXzEiLCJpYXQiOjE3NTM4MDIzOTAsImV4cCI6MTc1Mzg4ODc5MH0.NEgVyRciMDO1JTwQgW1ZpELKAIBD_q7qKQC7BQ6zcUVCXtLBKQO58OG1sUvBcBn4ddenVts6_FVLmcwLyql9KQ");
+}
+
 export default function AutoPlayer() {
   const router = useRouter();
   const { scheduleId: queryScheduleId, panelId } = router.query;
@@ -126,22 +131,31 @@ export default function AutoPlayer() {
   const current = contents[currentIndex];
 
   return (
-    <div style={{ width: "100vw", height: "100vh", background: "#000", display: "flex", alignItems: "center", justifyContent: "center" }}>
+    <div style={{ width: "100vw", height: "100vh", background: "#000", position: "relative", overflow: "hidden" }}>
       {current.mediaType === "video" ? (
         <video
           ref={videoRef}
           src={current.url}
-          style={{ maxWidth: "100vw", maxHeight: "100vh" }}
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: "100vw",
+            height: "100vh",
+            objectFit: "contain",
+            background: "#000"
+          }}
           autoPlay
           muted
-          controls={false}
+          controls={true}
           onEnded={handleVideoEnded}
         />
       ) : (
         <Image
           src={current.url}
           alt={current.name}
-          style={{ maxWidth: "100vw", maxHeight: "100vh", objectFit: "contain" }}
+          fill
+          style={{ objectFit: "contain" }}
         />
       )}
     </div>

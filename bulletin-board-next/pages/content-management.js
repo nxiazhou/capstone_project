@@ -102,6 +102,8 @@ export default function ContentManagement() {
     file.originalName.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const role = typeof window !== "undefined" ? localStorage.getItem('authRole') : null;
+
   return (
     <div className="flex min-h-screen">
       <Sidebar />
@@ -175,12 +177,14 @@ export default function ContentManagement() {
                     </a>
                   </td>
                   <td className="px-6 py-4">
-                    <button
-                      onClick={() => handleDelete(file.id)}
-                      className="text-red-600 hover:underline"
-                    >
-                      Delete
-                    </button>
+                    {role === 'admin' && (
+                      <button
+                        onClick={() => handleDelete(file.id)}
+                        className="text-red-600 hover:underline"
+                      >
+                        Delete
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))}

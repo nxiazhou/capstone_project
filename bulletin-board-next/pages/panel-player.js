@@ -13,44 +13,57 @@ export default function PanelPlayer() {
   const [loading, setLoading] = useState(true);
   const [noPlayable, setNoPlayable] = useState(false);
   const [scheduleTimer, setScheduleTimer] = useState(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [showControls, setShowControls] = useState(true);
+  const [controlsTimeout, setControlsTimeout] = useState(null);
   const videoRef = useRef(null);
   const imageTimerRef = useRef(null);
+  const containerRef = useRef(null);
+  const [scheduleId, setScheduleId] = useState(null);
+  const [reloadTrigger, setReloadTrigger] = useState(0);
 
-  // 拉取所有Schedule并处理逻辑（兼容无panels字段）
-  const fetchAndHandleSchedule = useCallback(async () => {
+  // 1. 只在 panelId 或 reloadTrigger 变化时 fetch scheduleId
+  useEffect(() => {
     if (!panelId) return;
     setLoading(true);
     setNoPlayable(false);
-    try {
-      const token = localStorage.getItem("authToken");
-      const res = await fetch("/api/schedules", {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (!res.ok) throw new Error("Failed to fetch schedules");
-      const data = await res.json();
-      const now = new Date();
-      // 先拿所有schedule id
-      const allIds = (data.content || []).map(sch => sch.id);
-      // 并发拉详情
-      const detailList = await Promise.all(
-        allIds.map(id => fetch(`/api/schedules/${id}`, {
+    const fetchScheduleId = async () => {
+      try {
+        const token = localStorage.getItem("authToken");
+        const res = await fetch(`/api/schedules/play-command?panelId=${panelId}`, {
           headers: { Authorization: `Bearer ${token}` }
-        }).then(r => r.ok ? r.json() : null).catch(() => null))
-      );
-      // 过滤出panelId匹配的
-      const all = detailList.filter(
-        sch => sch && sch.panels && sch.panels.some(p => String(p.id) === String(panelId))
-      );
-      // 当前时间内的schedule，优先级高的优先
-      const valid = all.filter(sch => {
-        const start = new Date(sch.startTime);
-        const end = new Date(sch.endTime);
-        return start <= now && now <= end;
-      }).sort((a, b) => b.priority - a.priority);
-      if (valid.length > 0) {
-        // 有可播的schedule，取第一个
-        setCurrentSchedule(valid[0]);
-        const items = (valid[0].contents || [])
+        });
+        if (!res.ok) throw new Error("Failed to fetch play-command");
+        const data = await res.json();
+        if (!data.data || !data.data.scheduleId) {
+          setNoPlayable(true);
+          setLoading(false);
+          return;
+        }
+        setScheduleId(data.data.scheduleId);
+      } catch (e) {
+        setNoPlayable(true);
+        setLoading(false);
+      }
+    };
+    fetchScheduleId();
+  }, [panelId, reloadTrigger]);
+
+  // 2. 只在 scheduleId 变化时 fetch schedule detail
+  useEffect(() => {
+    if (!scheduleId) return;
+    setLoading(true);
+    setNoPlayable(false);
+    const fetchScheduleDetail = async () => {
+      try {
+        const token = localStorage.getItem("authToken");
+        const detailRes = await fetch(`/api/schedules/${scheduleId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (!detailRes.ok) throw new Error("Failed to fetch schedule detail");
+        const detail = await detailRes.json();
+        setCurrentSchedule(detail);
+        const items = (detail.contents || [])
           .sort((a, b) => a.orderNo - b.orderNo)
           .map(item => ({
             id: item.id,
@@ -62,65 +75,48 @@ export default function PanelPlayer() {
         setCurrentIndex(0);
         setNoPlayable(false);
         setLoading(false);
-        // 到点自动查找下一个schedule
-        if (scheduleTimer) clearTimeout(scheduleTimer);
-        const ms = new Date(valid[0].endTime) - now;
-        if (ms > 0) {
-          const timer = setTimeout(() => {
-            fetchAndHandleSchedule();
-          }, ms);
-          setScheduleTimer(timer);
-        }
-      } else {
-        // 没有当前可播的，找下一个即将开始的
-        const future = all.filter(sch => new Date(sch.startTime) > now)
-          .sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
-        if (future.length > 0) {
-          const ms = new Date(future[0].startTime) - now;
-          if (scheduleTimer) clearTimeout(scheduleTimer);
-          if (ms > 0) {
-            const timer = setTimeout(() => {
-              fetchAndHandleSchedule();
-            }, ms);
-            setScheduleTimer(timer);
-          }
-        }
-        setCurrentSchedule(null);
-        setContents([]);
+      } catch (e) {
         setNoPlayable(true);
         setLoading(false);
       }
-    } catch (e) {
-      setCurrentSchedule(null);
-      setContents([]);
-      setNoPlayable(true);
-      setLoading(false);
-    }
-  }, [panelId, scheduleTimer]);
-
-  // 首次加载和panelId变化时拉取
-  useEffect(() => {
-    fetchAndHandleSchedule();
-    return () => {
-      if (scheduleTimer) clearTimeout(scheduleTimer);
     };
-  }, [fetchAndHandleSchedule, scheduleTimer]);
+    fetchScheduleDetail();
+  }, [scheduleId]);
 
-  // 自动轮播
-  const handleNext = useCallback(() => {
-    setCurrentIndex(prev => (prev + 1) % Math.max(1, contents.length));
-  }, [contents.length]);
-
+  // 3. 当前 schedule 快结束前2分钟 setReloadTrigger 触发重新拉取 scheduleId
   useEffect(() => {
-    if (!isPlaying || contents.length === 0) return;
-    const current = contents[currentIndex];
-    if (current && current.mediaType === "image") {
-      imageTimerRef.current = setTimeout(handleNext, 5000);
+    if (!currentSchedule) return;
+    const end = new Date(currentSchedule.endTime);
+    const now = new Date();
+    const ms = end - now - 2 * 60 * 1000;
+    if (ms > 0) {
+      const timer = setTimeout(() => {
+        setReloadTrigger(t => t + 1);
+      }, ms);
+      return () => clearTimeout(timer);
     }
-    return () => {
-      if (imageTimerRef.current) clearTimeout(imageTimerRef.current);
-    };
-  }, [isPlaying, currentIndex, contents, handleNext]);
+  }, [currentSchedule]);
+
+  // 轮播逻辑与player.js一致
+  const currentContent = contents.length > 0 ? contents[currentIndex % contents.length] : null;
+
+  // 自动轮播图片
+  useEffect(() => {
+    if (!currentContent || !isPlaying || currentContent.mediaType !== 'image') return;
+    const timer = setTimeout(() => {
+      setCurrentIndex(prev => (prev + 1) % Math.max(1, contents.length));
+    }, 5000);
+    return () => clearTimeout(timer);
+  }, [currentIndex, isPlaying, currentContent, contents.length]);
+
+  // 视频播放结束自动下一项
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !currentContent || currentContent.mediaType !== 'video') return;
+    const handleEnded = () => setCurrentIndex(prev => (prev + 1) % Math.max(1, contents.length));
+    video.addEventListener('ended', handleEnded);
+    return () => video.removeEventListener('ended', handleEnded);
+  }, [currentContent, contents.length]);
 
   // 视频自动播放下一个
   const handleVideoEnded = () => {
@@ -145,22 +141,56 @@ export default function PanelPlayer() {
     }
   };
 
-  // 播放结束时自动查找下一个schedule
-  useEffect(() => {
-    if (!currentSchedule || !contents.length) return;
-    const now = new Date();
-    const end = new Date(currentSchedule.endTime);
-    if (now >= end) {
-      fetchAndHandleSchedule();
+  // 全屏切换逻辑
+  const handleMouseMove = () => {
+    setShowControls(true);
+    if (controlsTimeout) clearTimeout(controlsTimeout);
+    const timeout = setTimeout(() => {
+      if (isFullscreen) setShowControls(false);
+    }, 3000);
+    setControlsTimeout(timeout);
+  };
+
+  const toggleFullscreen = async () => {
+    if (!isFullscreen) {
+      try {
+        if (containerRef.current.requestFullscreen) await containerRef.current.requestFullscreen();
+        setIsFullscreen(true);
+      } catch (err) {
+        console.error("Fullscreen error:", err);
+      }
+    } else {
+      try {
+        if (document.exitFullscreen) await document.exitFullscreen();
+        setIsFullscreen(false);
+      } catch (err) {
+        console.error("Exit fullscreen error:", err);
+      }
     }
-  }, [currentSchedule, contents, fetchAndHandleSchedule]);
+  };
 
   if (loading) {
     return (
       <div className="flex min-h-screen">
         <Sidebar />
-        <div className="flex-1 flex items-center justify-center bg-black text-white text-2xl">
-          Loading...
+        <div className="flex-1 bg-black flex flex-col items-center justify-center relative">
+          {/* Exit Player 按钮 */}
+          <button
+            onClick={() => router.push('/device-management')}
+            className="absolute top-4 left-4 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 z-10"
+          >
+            Exit Player
+          </button>
+          {/* 全屏按钮 */}
+          <button
+            onClick={toggleFullscreen}
+            className={`absolute top-4 right-4 bg-gray-800 text-white px-3 py-1 rounded hover:bg-gray-700 z-10`}
+          >
+            {isFullscreen ? '⤓ Exit Fullscreen' : '⤢ Fullscreen'}
+          </button>
+          <div className="flex-1 flex items-center justify-center w-full h-full">
+            <span className="text-white text-2xl">Loading...</span>
+          </div>
         </div>
       </div>
     );
@@ -178,6 +208,13 @@ export default function PanelPlayer() {
           >
             Exit Player
           </button>
+          {/* 全屏按钮 */}
+          <button
+            onClick={toggleFullscreen}
+            className={`absolute top-4 right-4 bg-gray-800 text-white px-3 py-1 rounded hover:bg-gray-700 z-10`}
+          >
+            {isFullscreen ? '⤓ Exit Fullscreen' : '⤢ Fullscreen'}
+          </button>
           <div className="flex-1 flex items-center justify-center w-full h-full">
             <span className="text-white text-2xl">No schedule for this panel at this time.</span>
           </div>
@@ -186,50 +223,80 @@ export default function PanelPlayer() {
     );
   }
 
-  const current = contents[currentIndex];
+  if (!currentContent) return (
+    <div className="flex min-h-screen">
+      <Sidebar />
+      <div className="flex-1 bg-black flex flex-col items-center justify-center relative">
+        <span className="text-white text-2xl">Loading...</span>
+      </div>
+    </div>
+  );
 
   return (
     <div className="flex min-h-screen">
       <Sidebar />
-      <div className="flex-1 bg-black flex flex-col items-center justify-center relative">
+      <div
+        ref={containerRef}
+        className="flex-1 bg-black flex flex-col items-center justify-center relative"
+        onMouseMove={handleMouseMove}
+      >
         {/* Exit Player 按钮 */}
         <button
           onClick={() => router.push('/device-management')}
-          className="absolute top-4 left-4 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 z-10"
+          className={`absolute top-4 left-4 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 z-10 ${isFullscreen && !showControls ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}
         >
           Exit Player
         </button>
+        {/* 全屏按钮 */}
+        <button
+          onClick={toggleFullscreen}
+          className={`absolute top-4 right-4 bg-gray-800 text-white px-3 py-1 rounded hover:bg-gray-700 z-10 ${isFullscreen && !showControls ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}
+        >
+          {isFullscreen ? '⤓ Exit Fullscreen' : '⤢ Fullscreen'}
+        </button>
         {/* 播放区 */}
-        <div className="w-full flex flex-col items-center justify-center" style={{ height: 'calc(100vh - 120px)' }}>
-          {current.mediaType === "video" ? (
+        <div className="relative w-full h-full flex items-center justify-center" style={{ height: 'calc(100vh - 120px)' }}>
+          {currentContent.mediaType === 'video' ? (
             <video
               ref={videoRef}
-              src={current.url}
+              src={currentContent.url}
               className="w-full h-full object-contain"
               controls
               autoPlay
               playsInline
-              onEnded={handleVideoEnded}
             />
           ) : (
-            <Image
-              src={current.url}
-              alt={current.name}
-              style={{ maxWidth: "100vw", maxHeight: "80vh", objectFit: "contain" }}
-            />
+            <div className="w-full h-full flex items-center justify-center">
+              <Image
+                key={currentContent.url}
+                src={currentContent.url}
+                alt={currentContent.name}
+                width={1920}
+                height={1080}
+                style={{ 
+                  width: "100%", 
+                  height: "100%", 
+                  objectFit: isFullscreen ? "cover" : "contain"
+                }}
+                priority
+                onError={() => setCurrentIndex(prev => (prev + 1) % Math.max(1, contents.length))}
+              />
+            </div>
           )}
         </div>
-        <div className="w-full max-w-4xl bg-gray-800 p-4 flex flex-col gap-4">
+        <div
+          className={`w-full ${isFullscreen ? 'absolute bottom-0 bg-opacity-80' : 'max-w-6xl'} bg-gray-800 p-4 flex flex-col gap-4 transition-opacity duration-300 ${isFullscreen && !showControls ? 'opacity-0' : 'opacity-100'}`}
+        >
           <div className="flex items-center justify-between text-white">
             <div className="flex items-center space-x-4">
-              <button onClick={handlePrevious} className="p-2 hover:bg-gray-700 rounded">⏮️</button>
-              <button onClick={handlePlayPause} className="p-2 hover:bg-gray-700 rounded">
+              <button onClick={() => setCurrentIndex(prev => (prev - 1 + contents.length) % contents.length)} className="p-2 hover:bg-gray-700 rounded">⏮️</button>
+              <button onClick={() => setIsPlaying(p => !p)} className="p-2 hover:bg-gray-700 rounded">
                 {isPlaying ? '⏸️ Pause' : '▶️ Play'}
               </button>
-              <button onClick={handleNext} className="p-2 hover:bg-gray-700 rounded">⏭️</button>
+              <button onClick={() => setCurrentIndex(prev => (prev + 1) % contents.length)} className="p-2 hover:bg-gray-700 rounded">⏭️</button>
             </div>
             <div className="text-sm">
-              Now Playing: {current.name} ({current.mediaType})
+              Now Playing: {currentContent.name} ({currentContent.mediaType})
             </div>
             <div className="text-sm">
               Schedule Time: {currentSchedule ? new Date(currentSchedule.startTime).toLocaleString() : ''} ~ {currentSchedule ? new Date(currentSchedule.endTime).toLocaleString() : ''}

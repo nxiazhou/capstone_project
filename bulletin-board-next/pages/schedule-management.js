@@ -337,7 +337,7 @@ export default function ScheduleManagement() {
           }
           // 设置已选 panelIds
           if (selectedSchedule?.panels) {
-            setSelectedPanelIds(selectedSchedule.panels.map((p) => p.id));
+            setSelectedPanelIds(selectedSchedule.panels.map((p) => p.panelId));
           } else {
             setSelectedPanelIds([]);
           }
@@ -464,6 +464,8 @@ export default function ScheduleManagement() {
       setError("Failed to save schedule: " + err.message);
     }
   };
+
+  const role = typeof window !== "undefined" ? localStorage.getItem('authRole') : null;
 
   return (
     <div className="flex">
@@ -622,18 +624,22 @@ export default function ScheduleManagement() {
                           <td className="py-3 px-4">{schedule.contentCount}</td>
                           <td className="py-3 px-4">{schedule.panelCount}</td>
                           <td className="py-3 px-4 space-x-2">
-                            <button
-                              onClick={() => handleEdit(schedule)}
-                              className="text-blue-500 hover:underline"
-                            >
-                              Edit
-                            </button>
-                            <button
-                              onClick={() => handleDelete(schedule)}
-                              className="text-red-500 hover:underline"
-                            >
-                              Delete
-                            </button>
+                            {role === 'admin' && (
+                              <>
+                                <button
+                                  onClick={() => handleEdit(schedule)}
+                                  className="text-blue-500 hover:underline"
+                                >
+                                  Edit
+                                </button>
+                                <button
+                                  onClick={() => handleDelete(schedule)}
+                                  className="text-red-500 hover:underline"
+                                >
+                                  Delete
+                                </button>
+                              </>
+                            )}
                             <button
                               onClick={() => router.push(`/player?scheduleId=${schedule.id}`)}
                               className="text-green-600 hover:underline"

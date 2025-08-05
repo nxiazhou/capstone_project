@@ -8,6 +8,7 @@ export default function ContentReview() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const role = typeof window !== "undefined" ? localStorage.getItem('authRole') : null;
 
   useEffect(() => {
     fetchReviewHistory();
@@ -178,12 +179,14 @@ export default function ContentReview() {
                         >
                           Preview
                         </a>
-                        <button
-                          onClick={() => handleDelete(file.id)}
-                          className="text-red-600 hover:text-red-900"
-                        >
-                          Delete
-                        </button>
+                        {role === 'admin' && (
+                          <button
+                            onClick={() => handleDelete(file.id)}
+                            className="text-red-600 hover:text-red-900"
+                          >
+                            Delete
+                          </button>
+                        )}
                       </td>
                     </tr>
                   );
