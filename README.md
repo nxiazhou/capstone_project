@@ -4,7 +4,7 @@ GitHub 仓库地址：👉 https://github.com/nxiazhou/capstone_project
 
 前端地址:http://116.62.64.33:3000/login
 
-Kubernetes前端地址:http://120.26.162.244/
+Kubernetes前端地址:http://120.26.162.244/  
 
 Jenkins地址:http://116.62.64.33:8080
 
