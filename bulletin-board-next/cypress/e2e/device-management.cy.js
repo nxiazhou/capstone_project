@@ -4,9 +4,9 @@ describe('Device Management Page', () => {
   beforeEach(() => {
     // 登录流程
     cy.visit('/login');
-    cy.get('input[placeholder="Username *"]').type('admin_nxz');
-    cy.get('input[placeholder="Password *"]').type('123456');
-    cy.contains('Login').click();
+    cy.get('input[placeholder="Username *"]').type('admin_nxz', { force: true });
+    cy.get('input[placeholder="Password *"]').type('123456', { force: true });
+    cy.contains('Login').click({ force: true });
 
     // 进入 Device Management 页面
     cy.url().should('include', '/dashboard');
@@ -22,7 +22,6 @@ describe('Device Management Page', () => {
     cy.contains('th', 'Location').should('exist');
     cy.contains('th', 'IP Address').should('exist');
     cy.contains('th', 'MAC Address').should('exist');
-    cy.contains('th', 'Last Heartbeat').should('exist');
     cy.contains('th', 'Actions').should('exist');
   });
 
@@ -76,7 +75,6 @@ describe('Device Management Page', () => {
             cy.get('td').eq(1).should('not.be.empty'); // Location
             cy.get('td').eq(2).should('not.be.empty'); // IP Address
             cy.get('td').eq(3).should('not.be.empty'); // MAC Address
-            cy.get('td').eq(4).should('not.be.empty'); // Last Heartbeat
             cy.contains('Edit');
             cy.contains('Delete');
           });

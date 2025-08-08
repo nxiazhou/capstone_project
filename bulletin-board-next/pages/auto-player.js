@@ -4,7 +4,7 @@ import Image from "next/image";
 
 // 自动注入token（只在本地调试时使用！）
 if (typeof window !== "undefined") {
-  localStorage.setItem("authToken", "eyJhbGciOiJIUzUxMiJ9.eyJyb2xlIjoiYWRtaW4iLCJ1c2VySWQiOjEsInN1YiI6IkFkbWluXzEiLCJpYXQiOjE3NTM4MDIzOTAsImV4cCI6MTc1Mzg4ODc5MH0.NEgVyRciMDO1JTwQgW1ZpELKAIBD_q7qKQC7BQ6zcUVCXtLBKQO58OG1sUvBcBn4ddenVts6_FVLmcwLyql9KQ");
+  localStorage.setItem("authToken", "eyJhbGciOiJIUzUxMiJ9.eyJyb2xlIjoiYWRtaW4iLCJ1c2VySWQiOjM4LCJzdWIiOiJhZG1pbl9jYnciLCJpYXQiOjE3NTQ2MjIyOTIsImV4cCI6MTc1NDcwODY5Mn0.SVo3mDqNxYaYTJIY0LxagF5MGWBPYcRDZRMMVYBKZ_jExcYdiHtz9sfCsnLbJCJLFZ_RZcxGAwqHw2QDOkSJRg");
 }
 
 export default function AutoPlayer() {

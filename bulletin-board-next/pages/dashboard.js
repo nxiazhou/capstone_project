@@ -4,11 +4,11 @@ import Link from "next/link";
 export default function Dashboard() {
   // Mock stats for demonstration
   const stats = [
-    { label: "Total Contents", value: 5, icon: "🎬" },
-    { label: "Total Schedules", value: 2, icon: "📅" },
-    { label: "Total Users", value: 15, icon: "👤" },
-    { label: "Pending Audits", value: 1, icon: "⏳" },
-    { label: "Approved Contents", value: 5, icon: "✅" },
+    { label: "Total Contents", value: 7, icon: "🎬" },
+    { label: "Total Schedules", value: 4, icon: "📅" },
+    { label: "Total Users", value: 12, icon: "👤" },
+    { label: "Pending Audits", value: 0, icon: "⏳" },
+    { label: "Approved Contents", value: 7, icon: "✅" },
     { label: "Rejected Contents", value: 0, icon: "❌" },
   ];
   return (
