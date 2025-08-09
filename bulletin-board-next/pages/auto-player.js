@@ -20,12 +20,12 @@ export default function AutoPlayer() {
   const videoRef = useRef(null);
   const imageTimerRef = useRef(null);
 
-  // 自动全屏
-  useEffect(() => {
-    if (document.documentElement.requestFullscreen) {
-      document.documentElement.requestFullscreen().catch(() => {});
-    }
-  }, []);
+  // 移除自动全屏，让Electron处理
+  // useEffect(() => {
+  //   if (document.documentElement.requestFullscreen) {
+  //     document.documentElement.requestFullscreen().catch(() => {});
+  //   }
+  // }, []);
 
   // 自动识别panel当前Schedule
   useEffect(() => {
@@ -84,20 +84,6 @@ export default function AutoPlayer() {
     fetchSchedule();
   }, [scheduleId]);
 
-  // 到点自动关闭页面
-  useEffect(() => {
-    if (!endTime) return;
-    const now = new Date();
-    const ms = endTime - now;
-    if (ms > 0) {
-      const timer = setTimeout(() => {
-        window.close();
-      }, ms);
-      return () => clearTimeout(timer);
-    } else {
-      window.close();
-    }
-  }, [endTime]);
 
   // 自动轮播
   const handleNext = useCallback(() => {
